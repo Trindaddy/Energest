@@ -1,16 +1,38 @@
-# React + Vite
+# ⚡ EnerGest - Otimizador de Eficiência e Manutenção Elétrica
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este é o repositório Front-end do projeto EnerGest, desenvolvido para o Hackathon InovSpin. O sistema é focado no monitoramento industrial, eficiência energética e recomendações de manutenção baseadas em Inteligência Artificial.
 
-Currently, two official plugins are available:
+## 🛠 Tecnologias Utilizadas
+* **Front-end:** React.js construído com Vite (para máxima performance).
+* **Estilização:** CSS nativo com Design System baseado em variáveis globais.
+* **Ícones:** Material Symbols (Google M3).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Como rodar o projeto localmente (Para o Back-end)
 
-## React Compiler
+Se você vai integrar a API (Flask/FastAPI/Node) com este front-end, siga os passos abaixo para rodar a interface na sua máquina (IDE como VS Code, PyCharm, etc.):
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Pré-requisitos:**
+* Ter o [Node.js](https://nodejs.org/) instalado.
 
-## Expanding the ESLint configuration
+**Passo a Passo:**
+1. Clone este repositório.
+2. Abra o terminal na pasta raiz do projeto.
+3. Instale as dependências executando:
+   \`\`\`bash
+   npm install
+   \`\`\`
+4. Inicie o servidor de desenvolvimento:
+   \`\`\`bash
+   npm run dev
+   \`\`\`
+5. O terminal mostrará uma URL (geralmente `http://localhost:5173/`). Abra no navegador.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🔌 Como fazer a Integração com o Back-end e DB
+
+Todo o consumo de dados está isolado na pasta `/src/services/api.js`. 
+Atualmente, o sistema está consumindo dados **Mockados (JSON local)** para fins de prototipação. 
+
+Para integrar com o banco de dados real e sua API:
+1. Vá até `src/services/api.js`.
+2. Altere a variável `BASE_URL` de `'mock'` para a URL da sua API local (ex: `http://localhost:5000/api`).
+3. Certifique-se de que os endpoints do seu back-end retornem o JSON na mesma estrutura mapeada no contrato do arquivo `api.js`.
