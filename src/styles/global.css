@@ -1,0 +1,34 @@
+/* src/styles/global.css */
+
+:root {
+  /* Fundo principal e Cards */
+  --bg-main: #0D1F2D;
+  --bg-card: #1d2e3d;
+  --bg-border: #354656;
+
+  /* Identidade Visual (Teal/Energia) */
+  --primary-dark: #0D6E6E;
+  --primary: #4a9d9c;
+  --primary-light: #afffff;
+
+  /* Alertas (IA) */
+  --danger: #FF3D3D;
+  --warning: #ffe0c8;
+
+  /* Textos */
+  --text-main: #FFFFFF;
+  --text-muted: #e0e0e0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  min-height: 100vh;
+}

@@ -1,45 +1,22 @@
+// src/App.jsx
 import React from 'react';
-import './index.css';
+import Sidebar from './components/layout/Sidebar';
+import Header from './components/layout/Header';
+import Dashboard from './pages/Dashboard/Dashboard'; // Importamos a página aqui
 
 function App() {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      
-      {/* Sidebar Lateral */}
-      <aside style={{ 
-        width: '250px', 
-        backgroundColor: 'var(--bg-card)', 
-        borderRight: '1px solid var(--bg-border)',
-        padding: '20px'
-      }}>
-        <h2 style={{ color: 'var(--color-primary-light)', marginBottom: '30px' }}>⚡ EnerGest</h2>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <a href="#" style={{ color: 'var(--text-main)', textDecoration: 'none' }}>📊 Dashboard</a>
-          <a href="#" style={{ color: 'var(--color-warning)', textDecoration: 'none' }}>🧠 Recomendações IA</a>
-          <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>⚙️ Equipamentos</a>
-        </nav>
-      </aside>
+    <div style={{ display: 'flex', minHeight: '100vh', width: '100vw' }}>
+      <Sidebar />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Header />
+        <main style={{ padding: '32px', flex: 1, overflowY: 'auto' }}>
+          
+          {/* Agora inserimos diretamente o componente Dashboard */}
+          <Dashboard />
 
-      {/* Conteúdo Principal */}
-      <main style={{ flex: 1, padding: '30px' }}>
-        <header style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between' }}>
-          <h1>Visão Geral da Planta</h1>
-          <div style={{ color: 'var(--color-primary-light)' }}>Olá, Gestor</div>
-        </header>
-        
-        {/* Aqui entrarão os Cards e Gráficos */}
-        <div style={{ 
-          border: '2px dashed var(--bg-border)', 
-          height: '400px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          color: 'var(--text-muted)'
-        }}>
-          Área de trabalho: Vamos colocar os KPIs e o Gráfico aqui!
-        </div>
-
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
