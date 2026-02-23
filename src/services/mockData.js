@@ -45,3 +45,42 @@ export const iaRecommendations = [
     }
   }
 ];
+
+export const equipamentosData = [
+  {
+    id: "MOT-001",
+    nome: "Motor Principal - Linha 1",
+    tipo: "Motor Trifásico",
+    status: "Crítico",
+    temperatura: "78ºC",
+    vibracao: "Alta (5.2 mm/s)",
+    ultima_manutencao: "10/01/2026"
+  },
+  {
+    id: "COMP-023",
+    nome: "Compressor Central",
+    tipo: "Compressor de Ar",
+    status: "Operacional",
+    temperatura: "45ºC",
+    vibracao: "Normal (1.1 mm/s)",
+    ultima_manutencao: "15/02/2026"
+  },
+  {
+    id: "EXA-005",
+    nome: "Sistema de Exaustão Central",
+    tipo: "Exaustor",
+    status: "Atenção",
+    temperatura: "65ºC",
+    vibracao: "Média (3.0 mm/s)",
+    ultima_manutencao: "05/11/2025"
+  },
+  {
+    id: "MOT-002",
+    nome: "Motor Secundário - Linha 2",
+    tipo: "Motor Trifásico",
+    status: "Operacional",
+    temperatura: "42ºC",
+    vibracao: "Normal (0.8 mm/s)",
+    ultima_manutencao: "20/01/2026"
+  }
+];

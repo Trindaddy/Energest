@@ -1,7 +1,7 @@
 // src/pages/Dashboard/Dashboard.jsx
 import React from 'react';
 import KpiCard from '../../components/ui/KpiCard';
-import ConsumoCustoChart from '../../components/ui/ConsumoCustoChart'; // <-- Importamos o gráfico
+import ConsumoCustoChart from '../../components/ui/ConsumoCustoChart'; 
 import { kpiData } from '../../services/mockData';
 
 const Dashboard = () => {
@@ -14,39 +14,47 @@ const Dashboard = () => {
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
         gap: '24px'
       }}>
-        <KpiCard 
-          titulo="Consumo Atual" 
-          valor={`${kpiData.consumo_atual_kwh} kWh`} 
-          icone="bolt" 
-          corDestaque="var(--primary-light)" 
-        />
-        <KpiCard 
-          titulo="Meta Diária" 
-          valor={`${kpiData.meta_diaria_kwh} kWh`} 
-          icone="flag" 
-          corDestaque="var(--primary)" 
-        />
-        <KpiCard 
-          titulo="Economia Acumulada" 
-          valor={`R$ ${kpiData.economia_acumulada_mes_brl}`} 
-          icone="savings" 
-          corDestaque="var(--primary-dark)" 
-        />
-        <KpiCard 
-          titulo="Status da Planta" 
-          valor={kpiData.status_planta} 
-          icone="warning" 
-          corDestaque="var(--warning)" 
-        />
-      </div>
+        <div className="animate-fade-in delay-1">
+          <KpiCard 
+            titulo="Consumo Atual" 
+            valor={`${kpiData.consumo_atual_kwh} kWh`} 
+            icone="bolt" 
+            corDestaque="var(--primary-light)" 
+          />
+        </div>
+        <div className="animate-fade-in delay-2">
+          <KpiCard 
+            titulo="Meta Diária" 
+            valor={`${kpiData.meta_diaria_kwh} kWh`} 
+            icone="flag" 
+            corDestaque="var(--primary)" 
+          />
+        </div>
+        <div className="animate-fade-in delay-3">
+          <KpiCard 
+            titulo="Economia Acumulada" 
+            valor={`R$ ${kpiData.economia_acumulada_mes_brl}`} 
+            icone="savings" 
+            corDestaque="var(--primary-dark)" 
+          />
+        </div>
+        <div className="animate-fade-in delay-4">
+          <KpiCard 
+            titulo="Status da Planta" 
+            valor={kpiData.status_planta} 
+            icone="warning" 
+            corDestaque="var(--warning)" 
+          />
+        </div>
+      </div> {/* <-- AQUI ESTAVA FALTANDO FECHAR A DIV DA GRELHA! */}
 
       {/* Área do Gráfico */}
-      <div style={{
+      <div className="animate-fade-in delay-4" style={{ /* Aproveitei e coloquei a animação aqui também! */
         backgroundColor: 'var(--bg-card)',
         borderRadius: '12px',
         padding: '24px',
         border: '1px solid var(--bg-border)',
-        height: '450px', // Altura fixa para o gráfico respirar
+        height: '450px', 
         display: 'flex',
         flexDirection: 'column'
       }}>

@@ -67,7 +67,7 @@ const RecomendacoesIA = () => {
                 Simulação de Cenários (What-If)
               </h4>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                 
                 {/* Cenário 1: Aplicar (Verde/Teal) */}
                 <div style={{ backgroundColor: 'rgba(74, 157, 156, 0.1)', border: '1px solid var(--primary)', padding: '16px', borderRadius: '8px' }}>
