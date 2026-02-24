@@ -3,28 +3,54 @@ import React, { useState } from 'react';
 import { iaRecommendations } from '../../services/mockData';
 
 const RecomendacoesIA = () => {
-  // Estado para controlar o botão de cada card individualmente
+  // Estados para controlar os botões e os fluxos de cada card
   const [statusCards, setStatusCards] = useState({});
-  // Estado para controlar a notificação flutuante (Toast)
-  const [toastMsg, setToastMsg] = useState(null);
+  const [toastConfig, setToastConfig] = useState(null); // { texto: '', tipo: 'sucesso' | 'info' | 'erro' }
+  const [showJustificativa, setShowJustificativa] = useState({}); // { id: boolean }
+  const [textoJustificativa, setTextoJustificativa] = useState({}); // { id: string }
 
-  // Função que simula a requisição para a API da sua amiga
+  // Função Auxiliar para disparar o Toast
+  const showToast = (texto, tipo = 'sucesso') => {
+    setToastConfig({ texto, tipo });
+    setTimeout(() => setToastConfig(null), 4000);
+  };
+
+  // 1. Fluxo de Aprovação
   const handleAprovar = (id, equipamento) => {
-    // 1. Muda o botão clicado para "Carregando"
     setStatusCards(prev => ({ ...prev, [id]: 'loading' }));
-
-    // 2. Simula um atraso de 1 segundo (tempo de ir no banco e voltar)
+    setShowJustificativa(prev => ({ ...prev, [id]: false }));
+    
     setTimeout(() => {
-      // 3. Muda o botão para "Sucesso"
       setStatusCards(prev => ({ ...prev, [id]: 'success' }));
-      // 4. Mostra o aviso na tela com o nome da máquina
-      setToastMsg(`✅ Comando de ajuste enviado para: ${equipamento}`);
-
-      // 5. Some com o aviso após 3.5 segundos
-      setTimeout(() => {
-        setToastMsg(null);
-      }, 3500);
+      showToast(`Ação aprovada para: ${equipamento}`, 'sucesso');
     }, 1000);
+  };
+
+  // 2. Fluxo de Recalcular (Repensar)
+  const handleRecalcular = (id, equipamento) => {
+    setStatusCards(prev => ({ ...prev, [id]: 'recalculating' }));
+    setShowJustificativa(prev => ({ ...prev, [id]: false }));
+
+    setTimeout(() => {
+      setStatusCards(prev => ({ ...prev, [id]: 'idle' }));
+      showToast(`Modelo da IA reajustado para ${equipamento}. Parâmetros atualizados.`, 'info');
+    }, 1800);
+  };
+
+  // 3. Fluxo de Recusa
+  const toggleJustificativa = (id) => {
+    setShowJustificativa(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const confirmarRecusa = (id, equipamento) => {
+    if (!textoJustificativa[id] || textoJustificativa[id].length < 5) {
+      alert("Por favor, insira uma justificação técnica para treinar o modelo.");
+      return;
+    }
+    
+    setStatusCards(prev => ({ ...prev, [id]: 'refused' }));
+    setShowJustificativa(prev => ({ ...prev, [id]: false }));
+    showToast(`Recomendação recusada. Feedback enviado à IA.`, 'erro');
   };
 
   return (
@@ -34,42 +60,42 @@ const RecomendacoesIA = () => {
       <div className="animate-fade-in">
         <h2 style={{ color: 'var(--text-main)', fontSize: '24px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="material-symbols-outlined" style={{ color: 'var(--primary-light)' }}>auto_awesome</span>
-          Central de Ações Preditivas (What-If)
+          Central de Decisões Preditivas
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>
-          Análise de impacto financeiro e recomendações geradas pelo motor de IA.
+          Análise de impacto, aprovação de ações e recolha de feedback para o modelo.
         </p>
       </div>
 
       {/* Lista de Recomendações */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {iaRecommendations.map((rec, index) => {
-          // Pegamos o status atual deste card específico
           const statusAtual = statusCards[rec.id] || 'idle';
+          const isRefused = statusAtual === 'refused';
+          const isSuccess = statusAtual === 'success';
 
           return (
             <div key={rec.id} className={`animate-fade-in delay-${index + 1}`} style={{
               backgroundColor: 'var(--bg-card)',
               borderRadius: '12px',
-              border: `1px solid ${rec.prioridade === 'Alta' ? 'var(--danger)' : 'var(--warning)'}`,
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
-              transition: 'all 0.3s ease',
-              // Se foi aprovado, a borda do card fica verde suave
-              borderColor: statusAtual === 'success' ? '#10B981' : undefined
+              border: `1px solid ${isSuccess ? '#10B981' : isRefused ? 'var(--bg-border)' : rec.prioridade === 'Alta' ? 'var(--danger)' : 'var(--warning)'}`,
+              padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', transition: 'all 0.3s ease',
+              opacity: isRefused ? 0.6 : 1 // Fica meio transparente se for recusado
             }}>
               
               {/* Topo do Cartão */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                    <h3 style={{ color: 'var(--text-main)', fontSize: '20px' }}>{rec.equipamento}</h3>
-                    {statusAtual === 'success' ? (
-                      <span style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #10B981' }}>
-                        Resolvido
-                      </span>
+                    <h3 style={{ color: isRefused ? 'var(--text-muted)' : 'var(--text-main)', fontSize: '20px', textDecoration: isRefused ? 'line-through' : 'none' }}>
+                      {rec.equipamento}
+                    </h3>
+                    
+                    {/* Badge Dinâmico */}
+                    {isSuccess ? (
+                      <span style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #10B981' }}>Resolvido</span>
+                    ) : isRefused ? (
+                      <span style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', border: '1px solid var(--bg-border)' }}>Ignorado (Feedback Guardado)</span>
                     ) : (
                       <span style={{ backgroundColor: rec.prioridade === 'Alta' ? 'rgba(255, 61, 61, 0.1)' : 'rgba(255, 224, 200, 0.1)', color: rec.prioridade === 'Alta' ? 'var(--danger)' : 'var(--warning)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', border: `1px solid ${rec.prioridade === 'Alta' ? 'var(--danger)' : 'var(--warning)'}` }}>
                         Prioridade {rec.prioridade}
@@ -82,109 +108,110 @@ const RecomendacoesIA = () => {
               </div>
 
               {/* Diagnóstico da IA */}
-              <div style={{ backgroundColor: 'var(--bg-main)', padding: '16px', borderRadius: '8px', borderLeft: `4px solid ${statusAtual === 'success' ? '#10B981' : 'var(--primary)'}` }}>
+              <div style={{ backgroundColor: 'var(--bg-main)', padding: '16px', borderRadius: '8px', borderLeft: `4px solid ${isSuccess ? '#10B981' : isRefused ? 'var(--text-muted)' : 'var(--primary)'}` }}>
                 <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '4px' }}><strong>Diagnóstico da IA:</strong></p>
                 <p style={{ color: 'var(--text-main)', fontSize: '15px' }}>{rec.ia_diagnostico}</p>
                 <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '12px', marginBottom: '4px' }}><strong>Ação Sugerida:</strong></p>
                 <p style={{ color: 'var(--text-main)', fontSize: '15px' }}>{rec.acao_sugerida}</p>
               </div>
 
-              {/* Simulador WHAT-IF (Responsivo) */}
-              <div style={{ marginTop: '8px' }}>
-                <h4 style={{ color: 'var(--text-main)', fontSize: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className="material-symbols-outlined">compare_arrows</span>
-                  Simulação de Cenários (What-If)
-                </h4>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-                  {/* Cenário 1: Aplicar */}
-                  <div style={{ backgroundColor: 'rgba(74, 157, 156, 0.1)', border: '1px solid var(--primary)', padding: '16px', borderRadius: '8px', opacity: statusAtual === 'success' ? 1 : 0.8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--primary-light)' }}>
-                      <span className="material-symbols-outlined">check_circle</span>
-                      <strong>Se Aplicar a Ação</strong>
+              {/* Simulador WHAT-IF */}
+              {(!isRefused) && (
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                    <div style={{ backgroundColor: 'rgba(74, 157, 156, 0.1)', border: '1px solid var(--primary)', padding: '16px', borderRadius: '8px', opacity: isSuccess ? 1 : 0.8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--primary-light)' }}>
+                        <span className="material-symbols-outlined">check_circle</span><strong>Se Aplicar a Ação</strong>
+                      </div>
+                      {rec.what_if.aplicar_custo ? (
+                        <p style={{ color: 'var(--text-main)' }}>Custo Estimado: <strong style={{ color: 'var(--primary-light)' }}>R$ {rec.what_if.aplicar_custo}</strong></p>
+                      ) : (
+                        <p style={{ color: 'var(--text-main)' }}>Economia Diária: <strong style={{ color: 'var(--primary-light)' }}>R$ {rec.what_if.aplicar_economia}</strong></p>
+                      )}
                     </div>
-                    {rec.what_if.aplicar_custo ? (
-                      <p style={{ color: 'var(--text-main)' }}>Custo Estimado: <strong style={{ color: 'var(--primary-light)' }}>R$ {rec.what_if.aplicar_custo}</strong></p>
-                    ) : (
-                      <p style={{ color: 'var(--text-main)' }}>Economia Diária: <strong style={{ color: 'var(--primary-light)' }}>R$ {rec.what_if.aplicar_economia}</strong></p>
-                    )}
-                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '8px' }}>Operação normalizada. Risco mitigado.</p>
-                  </div>
 
-                  {/* Cenário 2: Ignorar (Fica opaco se já foi resolvido) */}
-                  <div style={{ backgroundColor: 'rgba(255, 61, 61, 0.1)', border: '1px solid var(--danger)', padding: '16px', borderRadius: '8px', opacity: statusAtual === 'success' ? 0.3 : 1, transition: 'opacity 0.5s' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--danger)' }}>
-                      <span className="material-symbols-outlined">warning</span>
-                      <strong>Se Ignorar o Alerta</strong>
+                    <div style={{ backgroundColor: 'rgba(255, 61, 61, 0.1)', border: '1px solid var(--danger)', padding: '16px', borderRadius: '8px', opacity: isSuccess ? 0.3 : 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--danger)' }}>
+                        <span className="material-symbols-outlined">warning</span><strong>Se Ignorar o Alerta</strong>
+                      </div>
+                      {rec.what_if.ignorar_custo ? (
+                        <p style={{ color: 'var(--text-main)' }}>Risco Financeiro: <strong style={{ color: 'var(--danger)' }}>R$ {rec.what_if.ignorar_custo}</strong></p>
+                      ) : (
+                        <p style={{ color: 'var(--text-main)' }}>Desperdício Mensal: <strong style={{ color: 'var(--danger)' }}>R$ {rec.what_if.ignorar_desperdicio}</strong></p>
+                      )}
                     </div>
-                    {rec.what_if.ignorar_custo ? (
-                      <p style={{ color: 'var(--text-main)' }}>Risco Financeiro: <strong style={{ color: 'var(--danger)' }}>R$ {rec.what_if.ignorar_custo}</strong></p>
-                    ) : (
-                      <p style={{ color: 'var(--text-main)' }}>Desperdício Mensal: <strong style={{ color: 'var(--danger)' }}>R$ {rec.what_if.ignorar_desperdicio}</strong></p>
-                    )}
-                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '8px' }}>Probabilidade de Falha/Risco: <strong>{rec.what_if.risco_ignorar}</strong></p>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Botão Dinâmico de Ação */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-                <button 
-                  onClick={() => handleAprovar(rec.id, rec.equipamento)}
-                  disabled={statusAtual !== 'idle'} // Desabilita se estiver carregando ou já sucesso
-                  style={{
-                    backgroundColor: statusAtual === 'success' ? 'rgba(16, 185, 129, 0.2)' : statusAtual === 'loading' ? 'var(--bg-border)' : 'var(--primary-dark)',
-                    color: statusAtual === 'success' ? '#10B981' : 'var(--text-main)',
-                    border: statusAtual === 'success' ? '1px solid #10B981' : '1px solid transparent',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    fontSize: '15px',
-                    fontWeight: 'bold',
-                    cursor: statusAtual !== 'idle' ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {statusAtual === 'idle' && <><span className="material-symbols-outlined" style={{ fontSize: '20px' }}>task_alt</span> Aprovar Recomendação</>}
-                  {statusAtual === 'loading' && <><span className="material-symbols-outlined" style={{ fontSize: '20px', animation: 'spin 1s linear infinite' }}>sync</span> Processando...</>}
-                  {statusAtual === 'success' && <><span className="material-symbols-outlined" style={{ fontSize: '20px' }}>done_all</span> Ação Aplicada</>}
-                </button>
-              </div>
+              {/* === CAIXA DE JUSTIFICAÇÃO (Mostra se clicar em Recusar) === */}
+              {showJustificativa[rec.id] && (
+                <div className="animate-fade-in" style={{ backgroundColor: 'var(--bg-main)', padding: '16px', borderRadius: '8px', border: '1px dashed var(--danger)' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>Motivo da Recusa (Ajuda a treinar o modelo de Machine Learning):</p>
+                  <textarea 
+                    rows="2" 
+                    placeholder="Ex: Produção prioritária neste turno..."
+                    onChange={(e) => setTextoJustificativa(prev => ({ ...prev, [rec.id]: e.target.value }))}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--bg-border)', color: 'var(--text-main)', outline: 'none', resize: 'none' }}
+                  ></textarea>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+                    <button onClick={() => toggleJustificativa(rec.id)} style={{ padding: '8px 16px', background: 'transparent', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>Cancelar</button>
+                    <button onClick={() => confirmarRecusa(rec.id, rec.equipamento)} style={{ padding: '8px 16px', backgroundColor: 'var(--danger)', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Confirmar Recusa</button>
+                  </div>
+                </div>
+              )}
+
+              {/* === BOTÕES DE AÇÃO INTERATIVOS === */}
+              {statusAtual !== 'success' && statusAtual !== 'refused' && !showJustificativa[rec.id] && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px', marginTop: '8px', flexWrap: 'wrap' }}>
+                  
+                  {/* Botão Recusar (Vermelho / Secundário) */}
+                  <button onClick={() => toggleJustificativa(rec.id)} style={{ background: 'transparent', color: 'var(--danger)', border: '1px solid var(--danger)', padding: '10px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: '0.2s' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>block</span> Recusar
+                  </button>
+
+                  {/* Botão Recalcular (Teal / Secundário) */}
+                  <button onClick={() => handleRecalcular(rec.id, rec.equipamento)} disabled={statusAtual === 'recalculating'} style={{ background: 'transparent', color: 'var(--primary-light)', border: '1px solid var(--primary-light)', padding: '10px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: statusAtual === 'recalculating' ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: '0.2s' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px', animation: statusAtual === 'recalculating' ? 'spin 1s linear infinite' : 'none' }}>
+                      {statusAtual === 'recalculating' ? 'sync' : 'model_training'}
+                    </span> 
+                    {statusAtual === 'recalculating' ? 'A Avaliar...' : 'Recalcular IA'}
+                  </button>
+
+                  {/* Botão Aprovar (Teal / Primário) */}
+                  <button onClick={() => handleAprovar(rec.id, rec.equipamento)} disabled={statusAtual === 'loading'} style={{ backgroundColor: statusAtual === 'loading' ? 'var(--bg-border)' : 'var(--primary-dark)', color: 'var(--text-main)', border: 'none', padding: '10px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', cursor: statusAtual === 'loading' ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: '0.2s' }}>
+                    {statusAtual === 'loading' ? (
+                      <><span className="material-symbols-outlined" style={{ fontSize: '20px', animation: 'spin 1s linear infinite' }}>sync</span> Processando...</>
+                    ) : (
+                      <><span className="material-symbols-outlined" style={{ fontSize: '20px' }}>task_alt</span> Aprovar Recomendação</>
+                    )}
+                  </button>
+                  
+                </div>
+              )}
 
             </div>
           );
         })}
       </div>
 
-      {/* COMPONENTE TOAST (Notificação Flutuante de Sucesso) */}
-      {toastMsg && (
+      {/* COMPONENTE TOAST DINÂMICO */}
+      {toastConfig && (
         <div className="animate-fade-in" style={{
-          position: 'fixed',
-          bottom: '32px',
-          right: '32px',
-          backgroundColor: '#10B981', // Verde esmeralda de sucesso
-          color: '#ffffff',
-          padding: '16px 24px',
-          borderRadius: '8px',
-          boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          zIndex: 9999,
-          fontWeight: '500'
+          position: 'fixed', bottom: '32px', right: '32px',
+          backgroundColor: toastConfig.tipo === 'sucesso' ? '#10B981' : toastConfig.tipo === 'erro' ? '#354656' : 'var(--primary-dark)',
+          color: '#ffffff', padding: '16px 24px', borderRadius: '8px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', gap: '12px', zIndex: 9999, fontWeight: '500', borderLeft: `4px solid ${toastConfig.tipo === 'erro' ? 'var(--danger)' : '#fff'}`
         }}>
-          <span className="material-symbols-outlined">send</span>
-          {toastMsg}
+          <span className="material-symbols-outlined">
+            {toastConfig.tipo === 'sucesso' ? 'check_circle' : toastConfig.tipo === 'erro' ? 'feedback' : 'model_training'}
+          </span>
+          {toastConfig.texto}
         </div>
       )}
 
-      {/* CSS inline apenas para a animação do ícone girando */}
-      <style>{`
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-      `}</style>
-
+      {/* CSS inline para o giro dos ícones */}
+      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

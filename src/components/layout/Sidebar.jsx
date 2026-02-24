@@ -1,12 +1,14 @@
 // src/components/layout/Sidebar.jsx
 import React from 'react';
 
-const Sidebar = ({ currentPage, setCurrentPage }) => {
+const Sidebar = ({ currentPage, setCurrentPage, onLogout }) => {
   const menuItems = [
     { id: 'dashboard', nome: 'Dashboard', icone: 'dashboard' },
     { id: 'ia', nome: 'Recomendações IA', icone: 'memory' },
     { id: 'equipamentos', nome: 'Equipamentos', icone: 'conveyor_belt' },
   ];
+
+  
 
   return (
     <aside className="sidebar" style={{
@@ -46,7 +48,12 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
       </nav>
 
       {/* Logout */}
-      <div className="sidebar-item" title="Sair do Sistema" style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--danger)', cursor: 'pointer', padding: '12px 16px' }}>
+      <div 
+        className="sidebar-item" 
+        title="Sair do Sistema" 
+        onClick={onLogout}
+        style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--danger)', cursor: 'pointer', padding: '12px 16px' }}
+      >
         <span className="material-symbols-outlined">logout</span>
         <span className="sidebar-text" style={{ fontWeight: '500', whiteSpace: 'nowrap' }}>Sair do Sistema</span>
       </div>

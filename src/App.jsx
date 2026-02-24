@@ -5,64 +5,61 @@ import Header from './components/layout/Header';
 import Dashboard from './pages/Dashboard/Dashboard';
 import RecomendacoesIA from './pages/RecomendacoesIA/RecomendacoesIA';
 import Equipamentos from './pages/Equipamentos/Equipamentos';
+import Login from './pages/Login/Login'; // <-- Novo import
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Começa deslogado
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [isLoading, setIsLoading] = useState(true); // Começa carregando a aplicação
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Simula o tempo de rede inicial
-  useEffect(() => {
-    setTimeout(() => { setIsLoading(false); }, 800);
-  }, []);
-
-  // Função que intercepta o clique no menu para simular o carregamento
-  const handlePageChange = (pageId) => {
-    if (pageId === currentPage) return; // Não faz nada se clicar na mesma aba
-    setIsLoading(true); // Liga o spinner
-    setCurrentPage(pageId); // Muda a rota por trás
-    
-    // Desliga o spinner após 500ms simulando a busca na API
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+  // Função para fazer Logout (Sair)
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentPage('dashboard'); // Reseta a página para quando voltar
   };
 
+  const handlePageChange = (pageId) => {
+    if (pageId === currentPage) return; 
+    setIsLoading(true); 
+    setCurrentPage(pageId); 
+    setTimeout(() => { setIsLoading(false); }, 500);
+  };
+
+  // Se não estiver autenticado, trava na tela de Login
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
+
   const renderPage = () => {
-    // Se estiver carregando, mostra o Skeleton/Spinner global
     if (isLoading) {
       return (
         <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
           <div className="spinner"></div>
-          <p className="animate-pulse" style={{ color: 'var(--primary)', marginTop: '20px', fontSize: '16px', fontWeight: '500' }}>
-            {currentPage === 'ia' ? 'Analisando dados com Motor de IA...' : 'Sincronizando com a planta...'}
-          </p>
+          <p className="animate-pulse" style={{ color: 'var(--primary)', marginTop: '20px', fontSize: '16px', fontWeight: '500' }}>Sincronizando...</p>
         </div>
       );
     }
-
-    // Se não estiver carregando, mostra a página normal
     switch(currentPage) {
       case 'dashboard': return <Dashboard />;
       case 'ia': return <RecomendacoesIA />;
       case 'equipamentos': return <Equipamentos />;
+      // A tela de configurações será implementada na Fase 3, por enquanto cai no default
       default: return <Dashboard />;
     }
   };
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden' }}>
-      
-      {/* Passamos o handlePageChange em vez do setCurrentPage direto */}
-      <Sidebar currentPage={currentPage} setCurrentPage={handlePageChange} />
+      {/* Passamos o handleLogout para a Sidebar */}
+      <Sidebar currentPage={currentPage} setCurrentPage={handlePageChange} onLogout={handleLogout} />
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Header />
-        
+        {/* Passamos o handleLogout para o Header também */}
+        <Header onLogout={handleLogout} onOpenConfig={() => handlePageChange('configuracoes')} />
         <main style={{ padding: '32px', flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           {renderPage()}
         </main>
       </div>
-      
     </div>
   );
 }
