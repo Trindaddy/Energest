@@ -84,3 +84,11 @@ export const equipamentosData = [
     ultima_manutencao: "20/01/2026"
   }
 ];
+
+// Adicione isto no final do ficheiro src/services/mockData.js
+export const distribuicaoData = [
+  { name: 'Motores e Máquinas', value: 55, color: '#0D6E6E' },
+  { name: 'Sistemas de Exaustão', value: 25, color: '#4a9d9c' },
+  { name: 'Iluminação Industrial', value: 15, color: '#afffff' },
+  { name: 'Servidores/TI', value: 5, color: '#ffe0c8' }
+];
