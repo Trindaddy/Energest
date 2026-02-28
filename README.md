@@ -1,71 +1,65 @@
 # ⚡ EnerGest - Inteligência Artificial para o Chão de Fábrica
 
-O **EnerGest** é uma plataforma Full-Stack de gestão de energia e monitoramento preditivo industrial. Criado para resolver o desafio de alto consumo e paradas inesperadas em indústrias, o sistema une telemetria simulada em tempo real com um motor de **Machine Learning (Scikit-Learn)** para entregar decisões acionáveis, e não apenas gráficos bonitos.
+## 🚨 Problema Abordado
+As indústrias modernas enfrentam dois grandes gargalos financeiros e operacionais: **o alto custo do consumo energético** no horário de ponta e as **paradas não programadas (downtime)** por falha de maquinário. Atualmente, a gestão de fábrica atua de forma *reativa* — o problema acontece, a máquina quebra, a multa da concessionária chega, e só então a equipe toma uma atitude. Falta previsibilidade e cruzamento inteligente de dados de telemetria.
 
----
+## 💡 Descrição da Solução
+O **EnerGest** é uma plataforma Full-Stack de gestão preditiva que transforma a fábrica reativa em uma operação proativa. Atuando como o "cérebro" da planta industrial, o sistema realiza:
+* **Monitoramento Ativo:** Dashboard com telemetria simulada em tempo real (Consumo, Metas, Economia).
+* **Previsão de Consumo (What-If):** Um simulador integrado que permite ao gestor testar variáveis (Temperatura, Carga, Idade da Máquina) e prever o consumo exato da máquina antes de tomar uma decisão.
+* **Centro de Decisões Preditivas:** A IA analisa padrões de erro, cruza com uma biblioteca de diagnósticos de alta engenharia e sugere ações de otimização, entregando um cálculo exato de **Nível de Confiança** e **Impacto Financeiro**. O gestor pode aprovar (aplicando a rota de economia) ou recusar (treinando o modelo com justificativas).
 
-## 🎯 O que o sistema faz?
-O sistema atua como o "Cérebro" do gestor de planta:
-1. **Monitora:** Exibe o consumo de energia da fábrica pulsando em tempo real.
-2. **Controla:** Permite intervenção humana (ações em massa) no maquinário.
-3. **Prevê:** A IA analisa dados físicos (temperatura, carga, idade) e prevê o consumo exato da máquina.
-4. **Recomenda:** O modelo gera insights dinâmicos, sugerindo mudanças de parâmetros que geram economia financeira direta (What-If Analysis).
+## 🏗️ Arquitetura da Aplicação
+O projeto foi desenvolvido em uma arquitetura Cliente-Servidor (Client-Server) baseada em microsserviços rápidos, ideal para telemetria IoT e processamento de Machine Learning:
 
----
+1. **Camada de Dados (Simulação IoT):** Geração de base de dados industrial realista em formato `.csv` contendo dezenas de variáveis mecânicas.
+2. **Back-end (Motor Preditivo):** Uma API RESTful construída em Python recebe os chamados. O modelo de Regressão Linear do Scikit-Learn processa os dados dos sensores e devolve os cálculos preditivos via JSON.
+3. **Front-end (Interface de Gestão):** Uma aplicação Single Page Application (SPA) consome a API. O painel reage aos dados com oscilações em tempo real, fornecendo controle de status em massa para os equipamentos e Modais de UX avançada (Glassmorphism).
 
-## 📊 Dicionário de Indicadores (Legendas do Sistema)
+## 🛠️ Tecnologias Utilizadas
 
-Para facilitar a navegação do usuário, o sistema é dividido nos seguintes KPIs e Gráficos principais:
+**Front-end (Interface do Usuário):**
+* React.js (Componentização e Estados Dinâmicos)
+* Vite (Build tool ultrarrápido)
+* Recharts (Visualização gráfica de dados)
+* CSS3 / Glassmorphism (UI/UX corporativa de alto impacto)
 
-* **Consumo Atual (kWh):** A carga total de energia que a planta está puxando da rede neste exato segundo. Oscila dinamicamente baseada no uso real.
-* **Meta Diária (kWh):** O limite teto de consumo estabelecido para evitar multas de ultrapassagem de demanda com a concessionária.
-* **Economia Acumulada:** O montante financeiro em Reais (R$) salvo ao longo do mês graças à aprovação das recomendações da IA.
-* **Status da Planta:** Diagnóstico geral. Ficará em "Atenção" se o consumo atual se aproximar do limite crítico.
-* **Consumo vs Custo Diário:** Gráfico de linhas que cruza o volume de energia gasto com o custo da tarifa variando ao longo do dia (Horário de Ponta vs Fora de Ponta).
-* **Distribuição de Carga:** Gráfico de rosca demonstrando quais setores (Ex: Refrigeração, Produção, Iluminação) são os maiores "vilões" de consumo.
+**Back-end (API & Inteligência Artificial):**
+* Python 3
+* FastAPI (Criação de rotas assíncronas e rápidas de API)
+* Uvicorn (Servidor ASGI de alta performance)
+* Scikit-Learn (Treinamento de modelo de Machine Learning)
+* Pandas & Numpy (Estruturação e manipulação de DataFrames)
+* Joblib (Exportação do cérebro da IA para o formato `.pkl`)
 
----
+## 🚀 Instruções para Execução do Projeto
 
-## 🔄 Fluxo de Funcionamento (Por baixo dos panos)
+Siga os passos abaixo para rodar a aplicação completa localmente.
 
-Para entender como a mágica acontece, aqui está o ciclo de vida do nosso dado:
-
-1. **Geração e Treino (Python):** O backend lê uma base com 500 históricos de máquinas e treina um modelo de Regressão Linear. O "cérebro" é salvo no arquivo `model.pkl`.
-2. **Telemetria (FastAPI):** O backend expõe rotas que servem dados das máquinas ativas.
-3. **Consumo Front-end (React/Vite):** O painel solicita esses dados e aplica filtros de UX (Glassmorphism, Nomenclaturas Reais).
-4. **Ação Preditiva:** O usuário insere parâmetros de uma máquina estressada no simulador e o React envia isso em JSON para o FastAPI.
-5. **A Resposta:** O Python processa os dados no `model.pkl` em milissegundos, devolvendo a previsão de consumo exata para o usuário evitar uma quebra ou multa energética.
-
----
-
-## 🚀 Como rodar o sistema localmente (Play)
-
-Siga os passos abaixo para subir a aplicação completa na sua máquina:
-
-### 1. Subindo o Back-end (Inteligência Artificial)
-Abra o seu terminal, navegue até a pasta `backend` e execute:
+### 1. Configurando o Back-end (Motor Python)
+Abra o seu terminal, navegue até a pasta raiz do back-end (`backend/`) e execute:
 
 ```bash
-# 1. Instale as dependências do Python
+# 1. Instale as dependências essenciais
 pip install fastapi uvicorn pandas scikit-learn pydantic joblib
 
-# 2. Gere os dados e crie o modelo (Cérebro da IA)
+# 2. Gere os dados falsos de IoT e treine a IA localmente
 python fix_ia.py
 
-# 3. Ligue o servidor FastAPI
+# 3. Inicie o servidor da API
 uvicorn app.main:app --reload
 
-O servidor ficará rodando em http://127.0.0.1:8000.
+A API estará escutando na porta http://127.0.0.1:8000.
 
-2. Subindo o Front-end (Interface React)
-Abra um novo terminal, navegue até a pasta raiz do front-end (energest-front) e execute:
+2. Configurando o Front-end (Painel React)
+Abra um novo terminal, navegue até a pasta raiz do front-end (energest-front/) e execute:
 
 Bash
-# 1. Instale as dependências do Node (Vite, Recharts, etc)
+# 1. Baixe as dependências do projeto (Node Modules)
 npm install
 
 # 2. Inicie o servidor de desenvolvimento
 npm run dev
-O sistema abrirá automaticamente no seu navegador em http://localhost:5173.
+O sistema estará disponível no seu navegador no endereço http://localhost:5173.
 
-Nota para testes: Acesse a aba "Recomendações IA" e brinque com o Simulador ao Vivo para ver a comunicação com o motor de Machine Learning operando em tempo real!
+Dica de Avaliação: Acesse a tela "Recomendações IA" e utilize o Simulador What-If. Clique em "Auto-Preencher Anomalia" para ver a comunicação instantânea entre o painel e o motor preditivo do Back-end.
