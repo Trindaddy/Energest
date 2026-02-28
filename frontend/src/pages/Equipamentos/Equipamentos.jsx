@@ -114,7 +114,7 @@ const Equipamentos = () => {
       {selecionados.length > 0 && (
         <div className="animate-fade-in" style={{ backgroundColor: 'var(--primary-dark)', padding: '16px 24px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', border: '1px solid var(--primary)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ backgroundColor: '#fff', color: 'var(--primary-dark)', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>{selecionados.length}</span>
+            <span style={{ backgroundColor: '#fff', color: '#000', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px'}}>{selecionados.length}</span>
             <span style={{ color: '#fff', fontWeight: '500' }}>Máquinas Selecionadas</span>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
