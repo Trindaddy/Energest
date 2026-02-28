@@ -6,7 +6,7 @@ import { distribuicaoData } from '../../services/mockData';
 const DistribuicaoConsumoChart = () => {
   return (
     <div style={{ width: '100%', height: '100%', minHeight: '300px' }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
         <PieChart>
           <Pie
             data={distribuicaoData}

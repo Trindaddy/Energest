@@ -9,7 +9,7 @@ import { chartData } from '../../services/mockData';
 const ConsumoCustoChart = () => {
   return (
     <div style={{ width: '100%', height: '100%', minHeight: '350px' }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
         <LineChart
           data={chartData}
           margin={{ top: 20, right: 30, left: 0, bottom: 10 }}

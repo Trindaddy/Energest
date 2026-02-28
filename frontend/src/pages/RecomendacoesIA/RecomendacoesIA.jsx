@@ -1,16 +1,56 @@
 // src/pages/RecomendacoesIA/RecomendacoesIA.jsx
-import React, { useState } from 'react';
-import { iaRecommendations } from '../../services/mockData';
+import React, { useState, useEffect } from 'react';
 import SimuladorIAReal from '../../components/ui/SimuladorIAReal';
 
+// 1. O Cérebro Dinâmico: Biblioteca de falhas e ações industriais reais
+const bibliotecaIA = [
+  { diag: "Pico de temperatura anômalo no mancal principal.", acao: "Ajustar fluxo de refrigeração para 85%.", risco: "Desgaste severo e parada em 4h" },
+  { diag: "Vibração harmônica excedendo limite seguro (ISO 10816).", acao: "Reduzir velocidade de rotação em 12% temporariamente.", risco: "Quebra do eixo de transmissão" },
+  { diag: "Desbalanceamento de tensão detectado na fase T.", acao: "Acionar banco de capacitores reserva automaticamente.", risco: "Sobreaquecimento do estator" },
+  { diag: "Pressão de sucção abaixo do limite de cavitação.", acao: "Abrir válvula de alívio V-02 em 30%.", risco: "Destruição do rotor da bomba" },
+  { diag: "Harmônicas de rede afetando eficiência do motor.", acao: "Ativar filtro ativo de harmônicas.", risco: "Aumento de 18% no consumo" },
+  { diag: "Desgaste prematuro estimado na correia de transmissão.", acao: "Reduzir carga mecânica no eixo em 15%.", risco: "Rompimento em pleno regime" },
+  { diag: "Consumo de energia 20% acima do padrão do turno.", acao: "Otimizar setpoint de controle PID.", risco: "Multa por ultrapassar demanda contratada" },
+  { diag: "Degradação da qualidade do óleo isolante.", acao: "Agendar filtragem termovácuo em janela de manutenção.", risco: "Curto-circuito interno no trafo" },
+  { diag: "Sobrecarga térmica detectada no inversor de frequência.", acao: "Aumentar ventilação forçada do painel para 100%.", risco: "Desarme por proteção térmica (Trip)" },
+  { diag: "Fator de potência abaixo do limite de 0.92.", acao: "Injetar reativos na rede via painel de compensação.", risco: "Taxa excedente na fatura de energia" }
+];
+
+// Gerador inicial de recomendações (Para não depender mais do mockData.js)
+const gerarRecomendacoesIniciais = () => {
+  const maquinas = ["Motor Principal Extrusora", "Compressor de Amônia B", "Bomba de Recirculação 02"];
+  const prioridades = ["Alta", "Média", "Alta"];
+  
+  return maquinas.map((maq, index) => {
+    const itemAleatorio = bibliotecaIA[Math.floor(Math.random() * bibliotecaIA.length)];
+    return {
+      id: `REC-${100 + index}`,
+      equipamento: maq,
+      categoria: "Otimização Energética",
+      prioridade: prioridades[index],
+      confianca: (Math.floor(Math.random() * 10) + 85) + "%", // Entre 85% e 95%
+      ia_diagnostico: itemAleatorio.diag,
+      acao_sugerida: itemAleatorio.acao,
+      what_if: {
+        aplicar_economia: (Math.random() * 100 + 50).toFixed(2),
+        risco_ignorar: itemAleatorio.risco
+      }
+    };
+  });
+};
+
 const RecomendacoesIA = () => {
-  const [recsList, setRecsList] = useState(iaRecommendations);
+  const [recsList, setRecsList] = useState([]);
   const [statusCards, setStatusCards] = useState({});
   const [toastConfig, setToastConfig] = useState(null);
   
-  // Estados para o fluxo de Recusa
   const [showJustificativa, setShowJustificativa] = useState({});
   const [textoJustificativa, setTextoJustificativa] = useState({});
+
+  // Carrega os dados dinâmicos ao abrir a tela
+  useEffect(() => {
+    setRecsList(gerarRecomendacoesIniciais());
+  }, []);
 
   const showToast = (texto, tipo = 'sucesso') => {
     setToastConfig({ texto, tipo });
@@ -26,14 +66,32 @@ const RecomendacoesIA = () => {
     }, 1200);
   };
 
+  // RECALCULAR COMPLETO: Muda números E textos de diagnóstico
   const handleRecalcular = (id, equipamento) => {
     setStatusCards(prev => ({ ...prev, [id]: 'recalculating' }));
     setShowJustificativa(prev => ({ ...prev, [id]: false }));
+    
     setTimeout(() => {
       setRecsList(prevList => prevList.map(rec => {
         if (rec.id === id) {
-          const novaEconomia = (parseFloat(rec.what_if.aplicar_economia || 100) * 1.15).toFixed(2);
-          return { ...rec, confianca: '98%', what_if: { ...rec.what_if, aplicar_economia: novaEconomia } };
+          // 1. Sorteia um novo cenário da biblioteca para mostrar que a IA pensou em outra saída
+          const novoCenario = bibliotecaIA[Math.floor(Math.random() * bibliotecaIA.length)];
+          
+          // 2. Flutuação financeira segura contra erros (Evita o TypeError do toString)
+          const variacao = (Math.random() * 0.1) - 0.05; // -5% a +5%
+          const economiaAtual = parseFloat(String(rec.what_if?.aplicar_economia || 0).replace(',', '.'));
+          const novaEconomia = (economiaAtual * (1 + variacao)).toFixed(2);
+          
+          // 3. Flutuação da confiança
+          const novaConfianca = (Math.floor(Math.random() * 10) + 90) + '%'; // Sobe para 90~99%
+
+          return { 
+            ...rec, 
+            confianca: novaConfianca, 
+            ia_diagnostico: novoCenario.diag,
+            acao_sugerida: novoCenario.acao,
+            what_if: { ...rec.what_if, aplicar_economia: novaEconomia, risco_ignorar: novoCenario.risco } 
+          };
         }
         return rec;
       }));
@@ -134,7 +192,6 @@ const RecomendacoesIA = () => {
                 </div>
               )}
 
-              {/* CAIXA DE JUSTIFICATIVA (Condicional) */}
               {showJustificativa[rec.id] && (
                 <div className="animate-fade-in" style={{ backgroundColor: 'var(--bg-main)', padding: '16px', borderRadius: '8px', border: '1px dashed var(--danger)' }}>
                   <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>Motivo da Recusa (Ajuda a treinar o modelo preditivo):</p>
@@ -151,7 +208,6 @@ const RecomendacoesIA = () => {
                 </div>
               )}
 
-              {/* BOTÕES DE AÇÃO */}
               {statusAtual !== 'success' && statusAtual !== 'refused' && !showJustificativa[rec.id] && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '8px', flexWrap: 'wrap' }}>
                   
@@ -161,7 +217,7 @@ const RecomendacoesIA = () => {
                   
                   <button onClick={() => handleRecalcular(rec.id, rec.equipamento)} disabled={statusAtual === 'recalculating'} style={{ background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--bg-border)', padding: '10px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: statusAtual === 'recalculating' ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: '0.2s' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '18px', animation: statusAtual === 'recalculating' ? 'spin 1s linear infinite' : 'none' }}>sync</span> 
-                    {statusAtual === 'recalculating' ? 'Otimizando Parâmetros...' : 'Recalcular IA'}
+                    {statusAtual === 'recalculating' ? 'Buscando Novas Rotas...' : 'Recalcular IA'}
                   </button>
 
                   <button onClick={() => handleAprovar(rec.id, rec.equipamento)} disabled={statusAtual === 'loading'} style={{ backgroundColor: statusAtual === 'loading' ? 'var(--bg-border)' : 'var(--primary-dark)', color: 'var(--text-main)', border: 'none', padding: '10px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', cursor: statusAtual === 'loading' ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: '0.2s' }}>
@@ -176,7 +232,6 @@ const RecomendacoesIA = () => {
 
       <SimuladorIAReal />
 
-      {/* COMPONENTE TOAST DINÂMICO */}
       {toastConfig && (
         <div className="animate-fade-in" style={{ position: 'fixed', bottom: '32px', right: '32px', backgroundColor: toastConfig.tipo === 'sucesso' ? '#10B981' : toastConfig.tipo === 'erro' ? 'var(--bg-card)' : 'var(--primary-dark)', color: '#ffffff', padding: '16px 24px', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', gap: '12px', zIndex: 9999, fontWeight: '500', borderLeft: toastConfig.tipo === 'erro' ? '4px solid var(--danger)' : 'none' }}>
           <span className="material-symbols-outlined">{toastConfig.tipo === 'sucesso' ? 'check_circle' : toastConfig.tipo === 'erro' ? 'feedback' : 'model_training'}</span>

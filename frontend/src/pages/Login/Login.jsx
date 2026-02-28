@@ -20,8 +20,7 @@ const Login = ({ onLogin }) => {
       <div style={{ 
         flex: 1, 
         position: 'relative', 
-        display: 'none', // Esconde no mobile
-        '@media (min-width: 900px)': { display: 'flex' },
+        display: 'flex',
         flexDirection: 'column', 
         justifyContent: 'center', 
         padding: '64px',
