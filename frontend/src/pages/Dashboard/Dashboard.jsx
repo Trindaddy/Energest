@@ -33,7 +33,7 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* Grelha de KPIs (Agora consumindo o estado "kpis" dinâmico) */}
+      {/* Grelha de KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
         <div className="animate-fade-in delay-1"><KpiCard titulo="Consumo Atual" valor={`${kpis.consumo_atual_kwh} kWh`} icone="bolt" corDestaque="var(--primary-light)" /></div>
         <div className="animate-fade-in delay-2"><KpiCard titulo="Meta Diária" valor={`${kpis.meta_diaria_kwh} kWh`} icone="flag" corDestaque="var(--primary)" /></div>

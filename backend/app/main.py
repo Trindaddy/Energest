@@ -1,6 +1,44 @@
-# Adicionar no app/main.py (Backend)
-import pandas as pd
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+import joblib
+import pandas as pd
+
+# 1. Cria a instância do app PRIMEIRO
+app = FastAPI(title="Energy Prediction API")
+
+# 2. Configura o CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 3. Carrega o modelo de IA
+model = joblib.load("model.pkl")
+
+# 4. Define o Schema
+class EnergyData(BaseModel):
+    temperature: float
+    load_percentage: float
+    operating_hours: float
+    maintenance_status: int
+    machine_age_years: float
+
+# ==========================================
+# ROTAS DA API
+# ==========================================
+
+@app.post("/predict")
+async def predict(data: EnergyData):
+    # Converte os dados recebidos em DataFrame para o Scikit-Learn
+    input_df = pd.DataFrame([data.model_dump()])
+    # Realiza a previsão
+    prediction = model.predict(input_df)
+    return {"previsao": round(float(prediction[0]), 2)}
+
 
 @app.get("/api/equipamentos")
 async def get_equipamentos():
@@ -20,3 +58,10 @@ async def get_equipamentos():
         return JSONResponse(content=df_recent.to_dict(orient="records"))
     except Exception as e:
         return {"erro": str(e)}
+
+# ==========================================
+# INICIALIZAÇÃO
+# ==========================================
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
