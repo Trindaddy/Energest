@@ -5,7 +5,7 @@ import { kpiData, chartData, iaRecommendations, equipamentosData } from './mockD
 // CONFIGURAÇÃO DE AMBIENTE (ENV)
 // ==========================================
 // CHAVE DE OURO: Mude para 'false' para ligar o React no Python!
-const USE_MOCK = true; 
+const USE_MOCK = false; 
 
 const BASE_URL = 'http://127.0.0.1:8000'; // Porta padrão do FastAPI
 // ==========================================
