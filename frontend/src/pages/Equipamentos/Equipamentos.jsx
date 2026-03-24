@@ -1,210 +1,382 @@
 // src/pages/Equipamentos/Equipamentos.jsx
 import React, { useState, useEffect } from 'react';
-import { getEquipamentosReais } from '../../services/api';
-
-const nomesIndustriais = [
-  "Compressor Centrífugo Alta Pressão", "Motor Trifásico Linha A", "Bomba Hidráulica Secundária", 
-  "Sistema de Exaustão Central", "Trocador de Calor Alfa", "Esteira Transportadora T1", 
-  "Resfriador de Fluidos Industrial", "Gerador Auxiliar de Emergência", "Caldeira a Vapor Pressurizada", 
-  "Misturador de Lote 01", "Filtro Prensa Automatizado", "Torno CNC Principal", 
-  "Robô de Soldagem Kuka", "Ponte Rolante Setor B", "Inversor de Frequência WEG",
-  "Compressor Parafuso Rotativo", "Bomba Centrífuga de Polpa", "Soprador Roots", 
-  "Moinho de Bolas Industrial", "Forno de Indução Contínuo"
-];
+import { equipamentosData } from '../../services/mockData';
+import AlertBadge from '../../components/ui/AlertBadge';
+import SimuladorIAReal from '../../components/ui/SimuladorIAReal';
 
 const Equipamentos = () => {
-  const [equipamentos, setEquipamentos] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const [busca, setBusca] = useState('');
-  const [filtroStatus, setFiltroStatus] = useState('Todos');
-  
-  const [selecionados, setSelecionados] = useState([]);
   const [toastMsg, setToastMsg] = useState(null);
-
-  useEffect(() => {
-    const fetchDados = async () => {
-      setIsLoading(true);
-      const dadosReais = await getEquipamentosReais();
-      
-      const dadosEnriquecidos = (dadosReais || []).map((maq, index) => ({
-        ...maq,
-        nome: nomesIndustriais[index % nomesIndustriais.length],
-        status_ia: maq.status, // O que o modelo preditivo diz (Atenção / Operacional)
-        estado_humano: 'Em Uso' // O que o gestor decide (Em Uso / Manutenção)
-      }));
-      
-      setEquipamentos(dadosEnriquecidos);
-      setIsLoading(false);
-    };
-    fetchDados();
-  }, []);
-
-  const equipamentosFiltrados = equipamentos.filter((maq) => {
-    const atendeBusca = maq?.nome?.toLowerCase().includes(busca.toLowerCase()) || maq?.id?.toLowerCase().includes(busca.toLowerCase());
-    const atendeStatus = filtroStatus === 'Todos' || maq.status_ia === filtroStatus || maq.estado_humano === filtroStatus;
-    return atendeBusca && atendeStatus;
+  
+  // O Estado Central (O nosso "Banco de Dados" com LOCALSTORAGE)
+  const [listaEquipamentos, setListaEquipamentos] = useState(() => {
+    // Tenta puxar do cache do navegador primeiro
+    const dadosSalvos = localStorage.getItem('energest_equipamentos');
+    if (dadosSalvos) {
+      return JSON.parse(dadosSalvos);
+    }
+    // Se não tiver nada salvo, carrega os dados iniciais do mockData
+    return equipamentosData.map((maq, index) => ({
+      ...maq,
+      status: index === equipamentosData.length - 1 ? 'Offline' : maq.status
+    }));
   });
 
-  const handleSelecionarTodos = (e) => {
-    if (e.target.checked) setSelecionados(equipamentosFiltrados.map(m => m.id));
-    else setSelecionados([]);
+  // Salva no localStorage toda vez que a lista de equipamentos for alterada
+  useEffect(() => {
+    localStorage.setItem('energest_equipamentos', JSON.stringify(listaEquipamentos));
+  }, [listaEquipamentos]);
+
+  const [modalIoT, setModalIoT] = useState(null);
+  
+  // Estados para o CRUD (Cadastro e Edição)
+  const [showModalForm, setShowModalForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    id: '', nome: '', tipo: 'Motor Trifásico', ultima_manutencao: '', status: 'Operacional'
+  });
+
+  // --- FUNÇÕES DO CRUD ---
+
+  const handleAbrirCadastro = () => {
+    setIsEditing(false);
+    setFormData({ id: '', nome: '', tipo: 'Motor Trifásico', ultima_manutencao: '', status: 'Operacional' });
+    setShowModalForm(true);
   };
 
-  const handleSelecionarUm = (id) => {
-    setSelecionados(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+  const handleAbrirEdicao = (maquina) => {
+    setIsEditing(true);
+    setFormData({ ...maquina });
+    setShowModalForm(true);
   };
 
-  // Ação em Massa: Altera apenas o Estado Humano, preservando o diagnóstico da IA
-  const handleAlterarStatusEmMassa = (novoEstado) => {
-    setEquipamentos(prev => prev.map(maq => 
-      selecionados.includes(maq.id) ? { ...maq, estado_humano: novoEstado } : maq
-    ));
-    setSelecionados([]); 
+  const handleSalvar = (e) => {
+    e.preventDefault();
     
-    setToastMsg(`${selecionados.length} equipamento(s) movidos para "${novoEstado}".`);
-    setTimeout(() => setToastMsg(null), 3500);
+    if (isEditing) {
+      setListaEquipamentos(prev => prev.map(maq => 
+        maq.id === formData.id ? { ...maq, ...formData } : maq
+      ));
+      setToastMsg(`Equipamento ${formData.id} atualizado!`);
+    } else {
+      const novoId = `MAC-${Math.floor(Math.random() * 900) + 100}`;
+      const novaMaquina = {
+        ...formData,
+        id: novoId,
+        temperatura: '35ºC',
+        vibracao: 'Normal (0.5 mm/s)'
+      };
+      setListaEquipamentos([novaMaquina, ...listaEquipamentos]);
+      setToastMsg(`Equipamento ${novoId} pareado com sucesso!`);
+    }
+
+    setShowModalForm(false);
+    setTimeout(() => setToastMsg(null), 3000);
   };
 
-  const getBadgeIA = (status_ia) => {
-    if (status_ia === 'Atenção') return { bg: 'rgba(255, 61, 61, 0.1)', color: 'var(--danger)', border: 'var(--danger)', icon: 'warning' };
-    return { bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: '#10B981', icon: 'check_circle' };
+  const handleExcluir = (id, nome) => {
+    if (window.confirm(`⚠️ ATENÇÃO: Tem certeza que deseja desconectar e excluir "${nome}" (${id}) do monitoramento IoT?`)) {
+      setListaEquipamentos(prev => prev.filter(maq => maq.id !== id));
+      setToastMsg(`Equipamento ${id} removido da planta.`);
+      setTimeout(() => setToastMsg(null), 3000);
+    }
   };
+
+
+  // --- FUNÇÕES AUXILIARES ---
+
+  const handleExportarCSV = () => {
+    const cabecalho = "ID,Equipamento,Tipo,Status_Operacional,Temperatura,Vibracao,Ultima_Manutencao\n";
+    const linhas = listaEquipamentos.map(maq => {
+      return `${maq.id},${maq.nome},${maq.tipo},${maq.status},${maq.temperatura},${maq.vibracao},${maq.ultima_manutencao}`;
+    }).join("\n");
+    
+    const blob = new Blob([cabecalho + linhas], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `EnerGest_Relatorio_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
+    link.click();
+    
+    setToastMsg("Relatório CSV exportado com sucesso!");
+    setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const getBadgeType = (status) => {
+    if (status === 'Crítico') return 'danger';
+    if (status === 'Atenção') return 'warning';
+    if (status === 'Offline') return 'offline';
+    return 'success';
+  };
+
+  const [ping, setPing] = useState(12);
+  useEffect(() => {
+    if (modalIoT) {
+      const interval = setInterval(() => setPing(Math.floor(Math.random() * 5) + 10), 2000);
+      return () => clearInterval(interval);
+    }
+  }, [modalIoT]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', position: 'relative' }}>
       
-      <div className="animate-fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
+      {/* Cabeçalho */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h2 style={{ color: 'var(--text-main)', fontSize: '24px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span className="material-symbols-outlined" style={{ color: 'var(--primary-light)' }}>conveyor_belt</span>
             Inventário de Equipamentos
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Gerenciamento de planta e ações corretivas.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>
+            Monitorização de sensores, temperatura e vibração em tempo real.
+          </p>
         </div>
-        
-        <div style={{ display: 'flex', gap: '12px', width: '100%', maxWidth: '500px' }}>
-          <div style={{ position: 'relative', width: '170px' }}>
-            <span className="material-symbols-outlined" style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)', fontSize: '20px' }}>filter_list</span>
-            <select 
-              value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}
-              style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: '8px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--bg-border)', color: 'var(--text-main)', fontSize: '14px', outline: 'none', appearance: 'none', cursor: 'pointer' }}
-            >
-              <option value="Todos">Todos os Status</option>
-              <option value="Operacional">IA: Operacional</option>
-              <option value="Atenção">IA: Atenção</option>
-              <option value="Manutenção">Ação: Manutenção</option>
-            </select>
-            <span className="material-symbols-outlined" style={{ position: 'absolute', right: '12px', top: '12px', color: 'var(--text-muted)', pointerEvents: 'none' }}>expand_more</span>
-          </div>
 
-          <div style={{ position: 'relative', flex: 1 }}>
-            <span className="material-symbols-outlined" style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }}>search</span>
-            <input 
-              type="text" placeholder="Buscar máquina..." 
-              value={busca} onChange={(e) => setBusca(e.target.value)}
-              style={{ width: '100%', padding: '12px 12px 12px 44px', borderRadius: '8px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--bg-border)', color: 'var(--text-main)', fontSize: '14px', outline: 'none', transition: '0.3s' }}
-              onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--bg-border)'}
-            />
-          </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            onClick={handleAbrirCadastro} 
+            style={{ 
+              backgroundColor: 'var(--primary-dark)', color: 'var(--text-main)', border: 'none', 
+              padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', 
+              cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' 
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary)'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-dark)'}
+          >
+            <span className="material-symbols-outlined">add_circle</span> Novo Equipamento
+          </button>
+
+          <button 
+            onClick={handleExportarCSV} 
+            style={{ 
+              backgroundColor: 'transparent', color: 'var(--primary-light)', border: '1px solid var(--primary-light)', 
+              padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', 
+              cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' 
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(74, 157, 156, 0.1)'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <span className="material-symbols-outlined">download</span> Exportar CSV
+          </button>
         </div>
       </div>
 
-      {selecionados.length > 0 && (
-        <div className="animate-fade-in" style={{ backgroundColor: 'var(--primary-dark)', padding: '16px 24px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', border: '1px solid var(--primary)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ backgroundColor: '#fff', color: '#000', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px'}}>{selecionados.length}</span>
-            <span style={{ color: '#fff', fontWeight: '500' }}>Máquinas Selecionadas</span>
-          </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={() => handleAlterarStatusEmMassa('Em Uso')} style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10B981', border: '1px solid #10B981', padding: '8px 16px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: '0.2s' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_circle</span> Liberar Uso
-            </button>
-            <button onClick={() => handleAlterarStatusEmMassa('Manutenção')} style={{ backgroundColor: 'rgba(255, 166, 0, 0.2)', color: 'orange', border: '1px solid orange', padding: '8px 16px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: '0.2s' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>build</span> Isolar (Manutenção)
-            </button>
-            <button onClick={() => setSelecionados([])} style={{ background: 'transparent', color: 'rgba(255,255,255,0.7)', border: 'none', padding: '8px', cursor: 'pointer' }}>Cancelar</button>
-          </div>
-        </div>
-      )}
-
-      <div className="animate-fade-in delay-1" style={{ backgroundColor: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--bg-border)', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '850px' }}>
+      {/* Tabela com CRUD */}
+      <div className="animate-fade-in" style={{
+        backgroundColor: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--bg-border)', overflowX: 'auto'
+      }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
           <thead>
             <tr style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: 'var(--text-muted)', borderBottom: '1px solid var(--bg-border)' }}>
-              <th style={{ padding: '16px 24px', width: '40px' }}>
-                <input 
-                  type="checkbox" checked={equipamentosFiltrados.length > 0 && selecionados.length === equipamentosFiltrados.length}
-                  onChange={handleSelecionarTodos} style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary-light)' }}
-                />
-              </th>
               <th style={{ padding: '16px 24px', fontWeight: '500' }}>Equipamento</th>
-              <th style={{ padding: '16px 24px', fontWeight: '500' }}>Diagnóstico IA</th>
-              <th style={{ padding: '16px 24px', fontWeight: '500' }}>Controle Operacional</th>
-              <th style={{ padding: '16px 24px', fontWeight: '500' }}>Temperatura / Carga</th>
-              <th style={{ padding: '16px 24px', fontWeight: '500' }}>Idade (Anos)</th>
+              <th style={{ padding: '16px 24px', fontWeight: '500' }}>Estado Operacional</th>
+              <th style={{ padding: '16px 24px', fontWeight: '500' }}>Temperatura</th>
+              <th style={{ padding: '16px 24px', fontWeight: '500' }}>Vibração</th>
+              <th style={{ padding: '16px 24px', fontWeight: '500', textAlign: 'center' }}>Ações e IoT</th>
             </tr>
           </thead>
-          
           <tbody>
-            {isLoading ? (
-            <tr>
-              <td colSpan="6" style={{ padding: '48px', textAlign: 'center', color: 'var(--primary)' }}>
-                <span className="material-symbols-outlined" style={{ animation: 'spin 1s linear infinite', fontSize: '36px' }}>sync</span>
-                <p style={{ marginTop: '12px', fontWeight: '500' }}>Sincronizando telemetria...</p>
-              </td>
-            </tr>
-          ) : equipamentosFiltrados.length > 0 ? (
-            equipamentosFiltrados.map((maq, index) => {
-                const badgeIA = getBadgeIA(maq.status_ia);
-                const temp = maq.temperature ? maq.temperature.toFixed(1) + ' °C' : '--';
-                const carga = maq.load_percentage ? maq.load_percentage.toFixed(1) + '%' : '--';
-                const idade = maq.machine_age_years ? maq.machine_age_years.toFixed(1) : '--';
-                const isSelected = selecionados.includes(maq.id);
-
-                return (
-                  <tr key={maq.id} style={{ 
-                    borderBottom: index === equipamentosFiltrados.length - 1 ? 'none' : '1px solid var(--bg-border)', color: 'var(--text-main)', transition: '0.2s', backgroundColor: isSelected ? 'rgba(74, 157, 156, 0.05)' : 'transparent'
-                  }} onMouseOver={(e) => !isSelected && (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)')} onMouseOut={(e) => !isSelected && (e.currentTarget.style.backgroundColor = 'transparent')}>
-                    
-                    <td style={{ padding: '16px 24px' }}>
-                      <input type="checkbox" checked={isSelected} onChange={() => handleSelecionarUm(maq.id)} style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary-light)' }} />
-                    </td>
-                    
-                    <td style={{ padding: '16px 24px' }}>
-                      <div style={{ fontWeight: '600' }}>{maq.nome}</div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px' }}>{maq.id}</div>
-                    </td>
-                    
-                    {/* COLUNA 1: O que a IA está detectando fisicamente */}
-                    <td style={{ padding: '16px 24px' }}>
-                      <span title="Status baseado nos sensores via Scikit-Learn" style={{ backgroundColor: badgeIA.bg, color: badgeIA.color, border: `1px solid ${badgeIA.border}`, padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        <span className="material-symbols-outlined" style={{fontSize:'14px'}}>{badgeIA.icon}</span> {maq.status_ia}
-                      </span>
-                    </td>
-                    
-                    {/* COLUNA 2: Ação humana tomada sobre a máquina */}
-                    <td style={{ padding: '16px 24px' }}>
-                      <span style={{ backgroundColor: maq.estado_humano === 'Manutenção' ? 'rgba(255, 166, 0, 0.1)' : 'transparent', color: maq.estado_humano === 'Manutenção' ? 'orange' : 'var(--text-muted)', border: `1px solid ${maq.estado_humano === 'Manutenção' ? 'orange' : 'var(--bg-border)'}`, padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        {maq.estado_humano === 'Manutenção' ? <><span className="material-symbols-outlined" style={{fontSize:'14px'}}>build</span> Isolar / Manutenção</> : 'Em Uso Normal'}
-                      </span>
-                    </td>
-                    
-                    <td style={{ padding: '16px 24px', color: maq.status_ia === 'Atenção' ? 'var(--danger)' : 'var(--text-main)', fontWeight: maq.status_ia === 'Atenção' ? 'bold' : 'normal' }}>
-                      {temp} <span style={{ color: 'var(--text-muted)', fontWeight: 'normal', fontSize: '12px' }}>| {carga}</span>
-                    </td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-muted)' }}>{idade}</td>
-                  </tr>
-                );
-              })
+            {listaEquipamentos.length === 0 ? (
+              <tr><td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum equipamento na planta.</td></tr>
             ) : (
-              <tr><td colSpan="6" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum equipamento encontrado com os filtros atuais.</td></tr>
+              listaEquipamentos.map((maq, index) => (
+                <tr key={maq.id} style={{ 
+                  borderBottom: index === listaEquipamentos.length - 1 ? 'none' : '1px solid var(--bg-border)',
+                  color: 'var(--text-main)', transition: 'background 0.2s',
+                  opacity: maq.status === 'Offline' ? 0.6 : 1
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <td style={{ padding: '16px 24px' }}>
+                    <div style={{ fontWeight: '600' }}>{maq.nome}</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px' }}>{maq.id} | {maq.tipo}</div>
+                  </td>
+                  <td style={{ padding: '16px 24px' }}>
+                    <AlertBadge type={getBadgeType(maq.status)} label={maq.status} icon={maq.status === 'Offline' ? 'wifi_off' : 'sensors'} />
+                  </td>
+                  <td style={{ padding: '16px 24px', color: maq.status === 'Crítico' ? 'var(--danger)' : 'var(--text-main)' }}>
+                    {maq.status === 'Offline' ? '--' : maq.temperatura}
+                  </td>
+                  <td style={{ padding: '16px 24px' }}>{maq.status === 'Offline' ? '--' : maq.vibracao}</td>
+                  
+                  {/* BOTÕES DE AÇÃO (CRUD + IOT) */}
+                  <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                      <button title="Ver Telemetria" onClick={() => setModalIoT(maq)} style={{
+                        background: 'transparent', color: 'var(--primary-light)', border: '1px solid var(--bg-border)',
+                        padding: '6px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: '0.2s'
+                      }} onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary-light)'} onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--bg-border)'}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>settings_input_antenna</span>
+                      </button>
+
+                      <button title="Editar Equipamento" onClick={() => handleAbrirEdicao(maq)} style={{
+                        background: 'transparent', color: 'var(--warning)', border: '1px solid var(--bg-border)',
+                        padding: '6px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: '0.2s'
+                      }} onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--warning)'} onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--bg-border)'}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
+                      </button>
+
+                      <button title="Desconectar/Excluir" onClick={() => handleExcluir(maq.id, maq.nome)} style={{
+                        background: 'transparent', color: 'var(--danger)', border: '1px solid var(--bg-border)',
+                        padding: '6px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: '0.2s'
+                      }} onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--danger)'} onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--bg-border)'}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
 
+      <div style={{ marginTop: '16px' }}>
+        <SimuladorIAReal />
+      </div>
+
+      {/* MODAL DE FORMULÁRIO (CRIAR E EDITAR) */}
+      {showModalForm && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}>
+          <div className="animate-fade-in" style={{
+            backgroundColor: 'var(--bg-card)', width: '480px', borderRadius: '16px',
+            border: `1px solid ${isEditing ? 'var(--warning)' : 'var(--primary-light)'}`, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+          }}>
+            <div style={{ backgroundColor: 'var(--bg-main)', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--bg-border)' }}>
+              <h3 style={{ color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined" style={{ color: isEditing ? 'var(--warning)' : 'var(--primary-light)' }}>
+                  {isEditing ? 'edit_square' : 'add_circle'}
+                </span>
+                {isEditing ? 'Editar Equipamento' : 'Parear Novo Equipamento'}
+              </h3>
+              <button onClick={() => setShowModalForm(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <form onSubmit={handleSalvar} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {isEditing && (
+                <div>
+                  <label style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '6px', display: 'block' }}>ID do Equipamento (Não editável)</label>
+                  <input type="text" value={formData.id} disabled style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--bg-border)', backgroundColor: 'rgba(0,0,0,0.2)', color: 'var(--text-muted)', outline: 'none', cursor: 'not-allowed' }} />
+                </div>
+              )}
+
+              <div>
+                <label style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '6px', display: 'block' }}>Nome do Equipamento</label>
+                <input required type="text" placeholder="Ex: Extrusora Principal" value={formData.nome} onChange={(e) => setFormData({...formData, nome: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--bg-border)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', outline: 'none' }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '6px', display: 'block' }}>Categoria / Tipo</label>
+                  <select required value={formData.tipo} onChange={(e) => setFormData({...formData, tipo: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--bg-border)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', outline: 'none', appearance: 'none' }}>
+                    <option value="Motor Trifásico">Motor Trifásico</option>
+                    <option value="Compressor Parafuso">Compressor Parafuso</option>
+                    <option value="Bomba Centrífuga">Bomba Centrífuga</option>
+                    <option value="Exaustor">Exaustor</option>
+                    <option value="Trafo a Seco">Trafo a Seco</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '6px', display: 'block' }}>Data da Instalação</label>
+                  <input required type="date" value={formData.ultima_manutencao} onChange={(e) => setFormData({...formData, ultima_manutencao: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--bg-border)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', outline: 'none' }} />
+                </div>
+              </div>
+
+              {isEditing && (
+                <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px', border: '1px solid var(--bg-border)', marginTop: '8px' }}>
+                  <label style={{ color: 'var(--primary-light)', fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>science</span> Controle de Status Simulador (Demo)
+                  </label>
+                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--bg-border)', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', outline: 'none', appearance: 'none' }}>
+                    <option value="Operacional">🟢 Operacional</option>
+                    <option value="Atenção">🟠 Atenção (Alerta Leve)</option>
+                    <option value="Crítico">🔴 Crítico (Risco de Quebra)</option>
+                    <option value="Offline">⚪ Offline (Sensor Desconectado)</option>
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
+                <button type="button" onClick={() => setShowModalForm(false)} style={{ background: 'transparent', color: 'var(--text-muted)', padding: '12px 16px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                  Cancelar
+                </button>
+                <button type="submit" style={{ backgroundColor: isEditing ? 'var(--warning)' : 'var(--primary-dark)', color: isEditing ? '#000' : 'var(--text-main)', padding: '12px 24px', borderRadius: '8px', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}>
+                  {isEditing ? 'Salvar Alterações' : 'Parear Sensores IoT'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE TELEMETRIA IOT */}
+      {modalIoT && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}>
+          <div className="animate-fade-in" style={{
+            backgroundColor: 'var(--bg-card)', width: '500px', borderRadius: '16px',
+            border: '1px solid var(--primary-light)', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+          }}>
+            <div style={{ backgroundColor: 'var(--bg-main)', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--bg-border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span className="material-symbols-outlined" style={{ color: 'var(--primary-light)' }}>router</span>
+                <h3 style={{ color: 'var(--text-main)', margin: 0 }}>Gateway IoT | Diagnóstico</h3>
+              </div>
+              <button onClick={() => setModalIoT(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div style={{ padding: '24px' }}>
+              <h4 style={{ color: 'var(--primary-light)', marginBottom: '4px' }}>{modalIoT.nome}</h4>
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '24px' }}>ID: {modalIoT.id}</p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Protocolo</p>
+                  <p style={{ color: 'var(--text-main)', fontWeight: 'bold', fontSize: '15px' }}>MQTT (QoS 1)</p>
+                </div>
+                <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>IPv4 Local</p>
+                  <p style={{ color: 'var(--text-main)', fontWeight: 'bold', fontSize: '15px', fontFamily: 'monospace' }}>192.168.10.{Math.floor(Math.random() * 50) + 100}</p>
+                </div>
+                <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Latência API</p>
+                  <p style={{ color: modalIoT.status === 'Offline' ? 'var(--danger)' : '#10B981', fontWeight: 'bold', fontSize: '15px' }}>
+                    {modalIoT.status === 'Offline' ? 'Timeout' : `${ping} ms`}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: '#000', padding: '16px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '12px', color: '#10B981' }}>
+                <p style={{ color: '#555', marginBottom: '8px' }}>// Payload JSON Recebido</p>
+                {modalIoT.status === 'Offline' ? (
+                  <p style={{ color: 'var(--danger)' }}>Error: Connection refused. Sensor not responding.</p>
+                ) : (
+                  <>
+                    <p>{"{"}</p>
+                    <p style={{ paddingLeft: '16px' }}>"device_id": "{modalIoT.id}",</p>
+                    <p style={{ paddingLeft: '16px' }}>"temp_celsius": {modalIoT.temperatura.replace('ºC', '')},</p>
+                    <p style={{ paddingLeft: '16px' }}>"timestamp": "{new Date().toISOString()}"</p>
+                    <p>{"}"}</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notificações */}
       {toastMsg && (
         <div className="animate-fade-in" style={{ position: 'fixed', bottom: '32px', right: '32px', backgroundColor: '#10B981', color: '#ffffff', padding: '16px 24px', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', gap: '12px', zIndex: 9999, fontWeight: '500' }}>
           <span className="material-symbols-outlined">check_circle</span> {toastMsg}

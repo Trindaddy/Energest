@@ -1,44 +1,59 @@
 // src/services/api.js
-const API_URL = 'http://127.0.0.1:8000';
+import { kpiData, chartData, iaRecommendations, equipamentosData } from './mockData';
 
-// 1. Consumindo os dados reais do CSV do Back-end
-export const getEquipamentosReais = async () => {
-  try {
-    const response = await fetch(`${API_URL}/api/equipamentos`);
-    if (!response.ok) throw new Error('Falha ao buscar equipamentos');
-    return await response.json();
-  } catch (error) {
-    console.error("Erro na API:", error);
-    return []; // Retorna array vazio em caso de erro para não quebrar a tela
-  }
-};
+// ==========================================
+// CONFIGURAÇÃO DE AMBIENTE (ENV)
+// ==========================================
+// CHAVE DE OURO: Mude para 'false' para ligar o React no Python!
+const USE_MOCK = true; 
 
-// 2. Conexão real com o modelo Scikit-Learn
-export const simularPrevisaoIA = async (dadosMaquina) => {
-  try {
-    const response = await fetch(`${API_URL}/predict`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dadosMaquina)
+const BASE_URL = 'http://127.0.0.1:8000'; // Porta padrão do FastAPI
+// ==========================================
+
+/**
+ * Função Core de Fetch com Fallback de Segurança (Resiliência)
+ * Se o Back-end cair na hora do Pitch, o Front-end assume os mocks automaticamente.
+ */
+async function fetchFromApi(endpoint, mockFallback) {
+  if (USE_MOCK) {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(mockFallback), 600); // Delay simulando latência de rede
     });
-    if (!response.ok) throw new Error(`Erro: ${response.status}`);
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}${endpoint}`);
+    if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
     return await response.json();
   } catch (error) {
-    return { erro: "Falha na conexão com o motor Python." };
+    console.error(`[API ERROR] Falha ao comunicar com ${endpoint}:`, error);
+    console.warn("🛡️ Ativando Fallback Mode: Retornando dados em cache para não quebrar a UI.");
+    return mockFallback;
   }
-};
+}
 
-// 3. Função UX: Simulador de Pulso IoT (Para o Dashboard parecer vivo)
-// Isso substitui os mocks fixos por dados que flutuam sutilmente em tempo real
-export const getLiveIoTData = (baseConsumo, baseEconomia) => {
-  const oscilacaoConsumo = (Math.random() * 5 - 2.5).toFixed(1); // Oscila entre -2.5 e +2.5
-  const novoConsumo = (baseConsumo + parseFloat(oscilacaoConsumo)).toFixed(1);
-  
-  return {
-    consumo_atual_kwh: novoConsumo,
-    meta_diaria_kwh: 5000,
-    economia_acumulada_mes_brl: baseEconomia,
-    status_planta: parseFloat(novoConsumo) > 4200 ? 'Atenção' : 'Operacional',
-    timestamp: new Date().toLocaleTimeString()
-  };
+// ==========================================
+// ROTAS DO SISTEMA (ENDPOINTS)
+// ==========================================
+
+export const getDashboardKpis = () => fetchFromApi('/api/dashboard/kpis', kpiData);
+
+export const getConsumoHistorico = () => fetchFromApi('/api/dashboard/grafico-consumo', chartData);
+
+export const getRecomendacoesIA = () => fetchFromApi('/api/ia/recomendacoes', iaRecommendations);
+
+export const getEquipamentos = () => fetchFromApi('/api/equipamentos/lista', equipamentosData);
+
+export const aprovarRecomendacao = async (idRecomendacao) => {
+  if (USE_MOCK) {
+    console.log(`[AUDITORIA] Ação de correção ${idRecomendacao} enviada ao CLP da máquina.`);
+    return { status: 'sucesso', mensagem: 'Ação aplicada via rede industrial.' };
+  }
+
+  const response = await fetch(`${BASE_URL}/api/ia/aprovar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: idRecomendacao })
+  });
+  return response.json();
 };

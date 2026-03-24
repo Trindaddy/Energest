@@ -1,125 +1,273 @@
 // src/pages/Login/Login.jsx
 import React, { useState } from 'react';
+// 👇 IMPORTAÇÃO DA IMAGEM DO ASSETS AQUI 👇
+import ImagemProcessamento from '../../assets/Processing-bro.svg';
 
 const Login = ({ onLogin }) => {
+  const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEntrar = (e) => {
     e.preventDefault();
     setIsLoading(true);
+    // Simula o tempo de resposta do servidor
     setTimeout(() => {
       setIsLoading(false);
-      onLogin();
+      onLogin(); // Entra no sistema
     }, 1200);
   };
 
+  const handleCadastrar = (e) => {
+    e.preventDefault();
+    alert("Função de cadastro conectada! Agora é só ligar com o Back-end.");
+    setIsSignUp(false); // Volta para a tela de login
+  };
+
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: 'var(--bg-main)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: 'var(--bg-main)' }}>
       
-      {/* LADO ESQUERDO: Branding e Value Proposition */}
-      <div style={{ 
-        flex: 1, 
-        position: 'relative', 
-        display: 'flex',
-        flexDirection: 'column', 
-        justifyContent: 'center', 
-        padding: '64px',
-        background: 'linear-gradient(135deg, var(--bg-main) 0%, var(--primary-dark) 100%)',
-        overflow: 'hidden'
-      }} className="hide-mobile">
-        {/* Efeitos decorativos ao fundo */}
-        <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '300px', height: '300px', background: 'var(--primary)', filter: 'blur(100px)', opacity: 0.3, borderRadius: '50%' }}></div>
-        <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '400px', height: '400px', background: '#10B981', filter: 'blur(120px)', opacity: 0.2, borderRadius: '50%' }}></div>
-
-        <div style={{ position: 'relative', zIndex: 10, maxWidth: '500px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <span className="material-symbols-outlined" style={{ color: '#fff', fontSize: '32px' }}>bolt</span>
-            </div>
-            <h1 style={{ color: '#fff', fontSize: '36px', fontWeight: '800', letterSpacing: '-1px' }}>EnerGest.</h1>
-          </div>
-          
-          <h2 style={{ color: '#fff', fontSize: '42px', fontWeight: '700', lineHeight: '1.2', marginBottom: '24px' }}>
-            Inteligência Artificial para o chão de fábrica.
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '18px', lineHeight: '1.6' }}>
-            Transforme dados em decisões. Monitore, preveja falhas e reduza custos operacionais em tempo real com o nosso motor preditivo avançado.
-          </p>
+      {/* O React controla a classe 'active' baseada no botão clicado */}
+      <div className={`container-login ${isSignUp ? 'active' : ''}`}>
+        
+        {/* --- FORMULÁRIO DE CADASTRO (ESCONDIDO INICIALMENTE) --- */}
+        <div className="form-container sign-up">
+          <form onSubmit={handleCadastrar}>
+            <h1 style={{ color: 'var(--text-main)', marginBottom: '16px' }}>Criar Conta</h1>
+            <span style={{ color: 'var(--text-muted)' }}>Use seu email corporativo para registro</span>
+            <input type="text" placeholder="Nome Completo" required />
+            <input type="email" placeholder="Email" required />
+            <input type="password" placeholder="Senha" required />
+            <button type="submit">Cadastrar</button>
+          </form>
         </div>
-      </div>
 
-      {/* LADO DIREITO: Formulário de Login Minimalista */}
-      <div style={{ 
-        flex: 1, 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        backgroundColor: 'var(--bg-main)',
-        padding: '32px'
-      }}>
-        <div className="animate-fade-in" style={{ width: '100%', maxWidth: '400px' }}>
-          
-          {/* Logo mobile */}
-          <div className="show-mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '48px', justifyContent: 'center' }}>
-             <span className="material-symbols-outlined" style={{ color: 'var(--primary-light)', fontSize: '36px' }}>bolt</span>
-             <h1 style={{ color: 'var(--text-main)', fontSize: '28px', fontWeight: '800' }}>EnerGest</h1>
-          </div>
-
-          <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ color: 'var(--text-main)', fontSize: '28px', fontWeight: '700', marginBottom: '8px' }}>Bem-vindo de volta</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Insira suas credenciais para acessar a planta.</p>
-          </div>
-
-          <form onSubmit={handleEntrar} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div>
-              <label style={{ display: 'block', color: 'var(--text-main)', fontSize: '13px', marginBottom: '8px', fontWeight: '600' }}>Email Corporativo</label>
-              <div style={{ position: 'relative' }}>
-                <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', top: '14px', color: 'var(--text-muted)', fontSize: '20px' }}>mail</span>
-                <input type="email" defaultValue="gestor@industria.com" required style={{
-                  width: '100%', padding: '14px 14px 14px 48px', borderRadius: '12px', backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--bg-border)', color: 'var(--text-main)', fontSize: '15px', outline: 'none', transition: 'all 0.3s'
-                }} 
-                onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--bg-border)'}
-                />
-              </div>
+        {/* --- FORMULÁRIO DE LOGIN (VISÍVEL INICIALMENTE) --- */}
+        <div className="form-container sign-in">
+          <form onSubmit={handleEntrar}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <span className="material-symbols-outlined" style={{ color: 'var(--primary-light)', fontSize: '32px' }}>bolt</span>
+              <h1 style={{ color: 'var(--text-main)' }}>EnerGest</h1>
             </div>
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <label style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: '600' }}>Senha de Acesso</label>
-                <span style={{ color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', fontWeight: '500' }}>Esqueceu a senha?</span>
-              </div>
-              <div style={{ position: 'relative' }}>
-                <span className="material-symbols-outlined" style={{ position: 'absolute', left: '16px', top: '14px', color: 'var(--text-muted)', fontSize: '20px' }}>lock</span>
-                <input type="password" defaultValue="123456" required style={{
-                  width: '100%', padding: '14px 14px 14px 48px', borderRadius: '12px', backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--bg-border)', color: 'var(--text-main)', fontSize: '15px', outline: 'none', transition: 'all 0.3s'
-                }} 
-                onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--bg-border)'}
-                />
-              </div>
-            </div>
-            
-            <button type="submit" disabled={isLoading} style={{
-              marginTop: '8px', padding: '16px', borderRadius: '12px',
-              backgroundColor: isLoading ? 'var(--bg-border)' : 'var(--text-main)',
-              color: isLoading ? 'var(--text-muted)' : 'var(--bg-main)', 
-              fontSize: '16px', fontWeight: 'bold', border: 'none', cursor: isLoading ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.3s',
-              boxShadow: isLoading ? 'none' : '0 8px 20px rgba(255,255,255,0.1)'
-            }}>
-              {isLoading ? <span className="material-symbols-outlined" style={{ animation: 'spin 1s linear infinite' }}>sync</span> : 'Acessar Painel'}
-              {!isLoading && <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_forward</span>}
+            <span style={{ color: 'var(--text-muted)' }}>Acesse o painel da planta industrial</span>
+            <input type="email" placeholder="Email Corporativo" defaultValue="gestor@industria.com" required />
+            <input type="password" placeholder="Senha" defaultValue="123456" required />
+            <a href="#">Esqueceu sua senha?</a>
+            <button type="submit" disabled={isLoading} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {isLoading ? <span className="material-symbols-outlined" style={{ animation: 'spin 1s linear infinite' }}>sync</span> : 'Entrar na Plataforma'}
             </button>
           </form>
         </div>
+
+        {/* --- PAINEL DESLIZANTE (A MÁGICA ACONTECE AQUI) --- */}
+        <div className="toggle-container">
+          <div className="toggle">
+            <div className="toggle-panel toggle-left">
+              <h1>Bem-vindo de volta!</h1>
+              <p>Mantenha-se conectado com a sua planta industrial para acessar os dados preditivos da IA.</p>
+              <button className="hidden" onClick={() => setIsSignUp(false)}>Fazer Login</button>
+            </div>
+            
+            {/* 👇 A IMAGEM IMPORTADA É USADA AQUI 👇 */}
+            <div className="toggle-panel toggle-right">
+              <img src={ImagemProcessamento} alt="Processamento de Dados" style={{ width: '220px', maxWidth: '80%', marginBottom: '16px' }} />
+              <h1>Nova Planta?</h1>
+              <p>Registre seus dados corporativos para começar a monitorar suas máquinas com o EnerGest.</p>
+              <button className="hidden" onClick={() => setIsSignUp(true)}>Cadastre-se</button>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* --- ESTILOS ADAPTADOS PARA O TEMA ENERGEST --- */}
       <style>{`
-        @media (max-width: 899px) { .hide-mobile { display: none !important; } }
-        @media (min-width: 900px) { .show-mobile-only { display: none !important; } }
+        .container-login {
+          background-color: var(--bg-card);
+          border-radius: 30px;
+          border: 1px solid var(--bg-border);
+          box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+          position: relative;
+          overflow: hidden;
+          width: 768px;
+          max-width: 100%;
+          min-height: 480px;
+        }
+
+        .container-login p {
+          font-size: 14px;
+          line-height: 20px;
+          letter-spacing: 0.3px;
+          margin: 20px 0;
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        .container-login span {
+          font-size: 12px;
+        }
+
+        .container-login a {
+          color: var(--primary-light);
+          font-size: 13px;
+          text-decoration: none;
+          margin: 15px 0 10px;
+        }
+
+        .container-login button {
+          background-color: var(--primary);
+          color: #fff;
+          font-size: 13px;
+          padding: 12px 45px;
+          border: 1px solid transparent;
+          border-radius: 8px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          margin-top: 10px;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+
+        .container-login button:hover {
+          background-color: var(--primary-dark);
+        }
+
+        .container-login button.hidden {
+          background-color: transparent;
+          border-color: #fff;
+        }
+
+        .container-login button.hidden:hover {
+          background-color: rgba(255,255,255,0.1);
+        }
+
+        .container-login form {
+          background-color: var(--bg-card);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          padding: 0 40px;
+          height: 100%;
+        }
+
+        .container-login input {
+          background-color: var(--bg-main);
+          color: var(--text-main);
+          border: 1px solid var(--bg-border);
+          margin: 8px 0;
+          padding: 12px 15px;
+          font-size: 14px;
+          border-radius: 8px;
+          width: 100%;
+          outline: none;
+          transition: 0.3s;
+        }
+
+        .container-login input:focus {
+          border-color: var(--primary);
+        }
+
+        .form-container {
+          position: absolute;
+          top: 0;
+          height: 100%;
+          transition: all 0.6s ease-in-out;
+        }
+
+        .sign-in {
+          left: 0;
+          width: 50%;
+          z-index: 2;
+        }
+
+        .container-login.active .sign-in {
+          transform: translateX(100%);
+        }
+
+        .sign-up {
+          left: 0;
+          width: 50%;
+          opacity: 0;
+          z-index: 1;
+        }
+
+        .container-login.active .sign-up {
+          transform: translateX(100%);
+          opacity: 1;
+          z-index: 5;
+          animation: move 0.6s;
+        }
+
+        @keyframes move {
+          0%, 49.99% { opacity: 0; z-index: 1; }
+          50%, 100% { opacity: 1; z-index: 5; }
+        }
+
+        .toggle-container {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          width: 50%;
+          height: 100%;
+          overflow: hidden;
+          transition: all 0.6s ease-in-out;
+          border-radius: 150px 0 0 100px;
+          z-index: 1000;
+        }
+
+        .container-login.active .toggle-container {
+          transform: translateX(-100%);
+          border-radius: 0 150px 100px 0;
+        }
+
+        .toggle {
+          background-color: var(--primary);
+          background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+          color: #fff;
+          position: relative;
+          left: -100%;
+          height: 100%;
+          width: 200%;
+          transform: translateX(0);
+          transition: all 0.6s ease-in-out;
+        }
+
+        .container-login.active .toggle {
+          transform: translateX(50%);
+        }
+
+        .toggle-panel {
+          position: absolute;
+          width: 50%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          padding: 0 30px;
+          text-align: center;
+          top: 0;
+          transform: translateX(0);
+          transition: all 0.6s ease-in-out;
+        }
+
+        .toggle-left {
+          transform: translateX(-200%);
+        }
+
+        .container-login.active .toggle-left {
+          transform: translateX(0);
+        }
+
+        .toggle-right {
+          right: 0;
+          transform: translateX(0);
+        }
+
+        .container-login.active .toggle-right {
+          transform: translateX(200%);
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

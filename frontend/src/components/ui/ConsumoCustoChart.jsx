@@ -4,37 +4,37 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, 
   CartesianGrid, Tooltip, Legend 
 } from 'recharts';
-import { chartData } from '../../services/mockData';
 
-const ConsumoCustoChart = () => {
+// Clean Architecture: Componente Burro (Dumb Component). 
+// Ele não busca dados, apenas recebe "data" via props e os renderiza.
+const ConsumoCustoChart = ({ data }) => {
+  
+  // Tratamento de Erro Defensivo
+  if (!data || data.length === 0) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '350px', color: 'var(--text-muted)' }}>
+        <span className="material-symbols-outlined" style={{ marginRight: '8px' }}>monitoring</span>
+        Aguardando telemetria...
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', height: '100%', minHeight: '350px' }}>
-      <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
-        <LineChart
-          data={chartData}
-          margin={{ top: 20, right: 30, left: 0, bottom: 10 }}
-        >
-          {/* Grelha de fundo discreta */}
+      {/* minWidth={0} minHeight={0} resolve os alertas do Recharts na árvore DOM */}
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+        <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#354656" vertical={false} />
-          
-          {/* Eixo X (Horas) */}
           <XAxis dataKey="hora" stroke="#e0e0e0" tick={{ fill: '#e0e0e0' }} />
-          
-          {/* Eixo Y Esquerdo (Consumo - Azul Ciano) */}
           <YAxis yAxisId="left" stroke="#afffff" tick={{ fill: '#afffff' }} />
-          
-          {/* Eixo Y Direito (Custo - Vermelho Alerta) */}
           <YAxis yAxisId="right" orientation="right" stroke="#FF3D3D" tick={{ fill: '#FF3D3D' }} />
           
-          {/* Tooltip ao passar o rato */}
           <Tooltip 
             contentStyle={{ backgroundColor: '#1d2e3d', borderColor: '#354656', borderRadius: '8px', color: '#fff' }}
             itemStyle={{ color: '#fff' }}
           />
-          
           <Legend wrapperStyle={{ paddingTop: '20px' }} />
           
-          {/* Linha de Consumo */}
           <Line 
             yAxisId="left"
             type="monotone" 
@@ -46,7 +46,6 @@ const ConsumoCustoChart = () => {
             activeDot={{ r: 6, fill: '#afffff' }} 
           />
           
-          {/* Linha de Custo */}
           <Line 
             yAxisId="right"
             type="monotone" 

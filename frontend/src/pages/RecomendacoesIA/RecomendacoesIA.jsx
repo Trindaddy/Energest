@@ -1,7 +1,7 @@
 // src/pages/RecomendacoesIA/RecomendacoesIA.jsx
 import React, { useState, useEffect } from 'react';
-import SimuladorIAReal from '../../components/ui/SimuladorIAReal';
 
+// 1. O Cérebro Dinâmico: Biblioteca de falhas e ações industriais reais
 const bibliotecaIA = [
   { diag: "Pico de temperatura anômalo no mancal principal.", acao: "Ajustar fluxo de refrigeração para 85%.", risco: "Desgaste severo e parada em 4h" },
   { diag: "Vibração harmônica excedendo limite seguro (ISO 10816).", acao: "Reduzir velocidade de rotação em 12% temporariamente.", risco: "Quebra do eixo de transmissão" },
@@ -15,6 +15,7 @@ const bibliotecaIA = [
   { diag: "Fator de potência abaixo do limite de 0.92.", acao: "Injetar reativos na rede via painel de compensação.", risco: "Taxa excedente na fatura de energia" }
 ];
 
+// Gerador inicial dinâmico
 const gerarRecomendacoesIniciais = () => {
   const maquinas = ["Motor Principal Extrusora", "Compressor de Amônia B", "Bomba de Recirculação 02", "Moinho de Bolas Industrial"];
   const prioridades = ["Alta", "Média", "Alta", "Média"];
@@ -45,7 +46,7 @@ const RecomendacoesIA = () => {
   const [showJustificativa, setShowJustificativa] = useState({});
   const [textoJustificativa, setTextoJustificativa] = useState({});
   
-  // Novo Estado: Controle do Filtro (Padrão: mostra só o que o usuário precisa resolver)
+  // Estado do Filtro
   const [filtroAtual, setFiltroAtual] = useState('Pendentes');
 
   useEffect(() => {
@@ -66,7 +67,6 @@ const RecomendacoesIA = () => {
     }, 1200);
   };
 
-  // RECALCULAR CORRIGIDO: Altera apenas os números (economia e confiança)
   const handleRecalcular = (id, equipamento) => {
     setStatusCards(prev => ({ ...prev, [id]: 'recalculating' }));
     setShowJustificativa(prev => ({ ...prev, [id]: false }));
@@ -77,13 +77,11 @@ const RecomendacoesIA = () => {
           const variacao = (Math.random() * 0.1) - 0.05; 
           const economiaAtual = parseFloat(String(rec.what_if?.aplicar_economia || 0).replace(',', '.'));
           const novaEconomia = (economiaAtual * (1 + variacao)).toFixed(2);
-          
           const novaConfianca = (Math.floor(Math.random() * 10) + 90) + '%'; 
 
           return { 
             ...rec, 
             confianca: novaConfianca, 
-            // Diagnóstico, Ação e Risco originais mantidos intactos!
             what_if: { ...rec.what_if, aplicar_economia: novaEconomia } 
           };
         }
@@ -114,7 +112,7 @@ const RecomendacoesIA = () => {
     if (filtroAtual === 'Pendentes') return status !== 'success' && status !== 'refused';
     if (filtroAtual === 'Aprovados') return status === 'success';
     if (filtroAtual === 'Recusados') return status === 'refused';
-    return true; // Exibe "Todos"
+    return true; 
   });
 
   return (
@@ -171,6 +169,7 @@ const RecomendacoesIA = () => {
                 opacity: isRefused ? 0.6 : 1
               }}>
                 
+                {/* Topo do Card */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
@@ -188,6 +187,7 @@ const RecomendacoesIA = () => {
                     <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>ID: {rec.id} | {rec.categoria}</p>
                   </div>
                   
+                  {/* Barra de Confiança */}
                   <div style={{ textAlign: 'right', backgroundColor: 'var(--bg-main)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
                     <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>Confiança da Previsão</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -199,6 +199,7 @@ const RecomendacoesIA = () => {
                   </div>
                 </div>
 
+                {/* Área de Informação */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
                   <div style={{ backgroundColor: 'var(--bg-main)', padding: '16px', borderRadius: '8px', borderLeft: `4px solid ${isSuccess ? '#10B981' : isRefused ? 'var(--text-muted)' : 'var(--primary)'}` }}>
                     <p style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Diagnóstico & Ação</p>
@@ -220,6 +221,7 @@ const RecomendacoesIA = () => {
                   </div>
                 </div>
 
+                {/* Área de Justificativa */}
                 {showJustificativa[rec.id] && (
                   <div className="animate-fade-in" style={{ backgroundColor: 'var(--bg-main)', padding: '16px', borderRadius: '8px', border: '1px dashed var(--danger)' }}>
                     <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>Motivo da Recusa (Ajuda a treinar o modelo preditivo):</p>
@@ -236,7 +238,7 @@ const RecomendacoesIA = () => {
                   </div>
                 )}
 
-                {/* Botões só aparecem se a ação for pendente */}
+                {/* Botões de Ação */}
                 {statusAtual !== 'success' && statusAtual !== 'refused' && !showJustificativa[rec.id] && (
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '8px', flexWrap: 'wrap' }}>
                     
@@ -260,8 +262,7 @@ const RecomendacoesIA = () => {
         )}
       </div>
 
-      <SimuladorIAReal />
-
+      {/* Toasts */}
       {toastConfig && (
         <div className="animate-fade-in" style={{ position: 'fixed', bottom: '32px', right: '32px', backgroundColor: toastConfig.tipo === 'sucesso' ? '#10B981' : toastConfig.tipo === 'erro' ? 'var(--bg-card)' : 'var(--primary-dark)', color: '#ffffff', padding: '16px 24px', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', gap: '12px', zIndex: 9999, fontWeight: '500', borderLeft: toastConfig.tipo === 'erro' ? '4px solid var(--danger)' : 'none' }}>
           <span className="material-symbols-outlined">{toastConfig.tipo === 'sucesso' ? 'check_circle' : toastConfig.tipo === 'erro' ? 'feedback' : 'model_training'}</span>
